@@ -60,6 +60,6 @@ flowchart LR
     class Loki logs;
     class Grafana logs;
 
-    linkStyle default stroke:#000,stroke-width:0.2em;
+    linkStyle default stroke:#fff,stroke-width:0.2em;
 
 ```
