@@ -139,4 +139,4 @@ Requirement: Gateway has to be able to handle high load
 Requirement: Requests should be processed quickly
 
 ## 23rd December
-
+- Learned how to test apis in Golang https://speedscale.com/blog/testing-golang-with-httptest/
