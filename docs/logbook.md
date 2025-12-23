@@ -140,3 +140,7 @@ Requirement: Requests should be processed quickly
 
 ## 23rd December
 - Learned how to test apis in Golang https://speedscale.com/blog/testing-golang-with-httptest/
+- Initially decided to use Go version 1.25.5 (latest release), decided to downgrade to Go version 1.24.11, as it the most stable version of Go that works with GitHub actions
+- Created some basic microservices using net/http
+- Created some unit tests for the microservices to make sure there were working as expected
+- Makefile to automate running the net/http microservices and the unit tests

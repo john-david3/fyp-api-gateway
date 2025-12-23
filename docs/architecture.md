@@ -1,65 +1,69 @@
 ```mermaid
-flowchart LR
-    %% Top row: Public Internet -> Gateway -> Microservices
-    subgraph Public_Internet["🌐 Public Internet"]
-        WebClients["Web Clients"]
-    end
+flowchart TB
+%% Graphs
+    subgraph Project["API Gateway"]
+        direction TB
 
-    subgraph Project["Project Environment"]
-        %% API Gateway (top row)
-        subgraph Gateway["API Gateway"]
-            NGINX["NGINX"]
+        subgraph Frontend["Frontend"]
+            direction LR
+            Clients["Clients"]
+            Dashboard["Dashboard"]
+            Config["Config File"]
         end
 
-        %% Microservices (top row)
-        subgraph Microservices["Microservices"]
-            ServiceA["Service A"]
-            ServiceB["Service B"]
-            ServiceC["Service C"]
-        end
-
-        %% Gateway Features (bottom row)
-        subgraph Gateway_Features["Gateway Features"]
+        subgraph Backend["Backend"]
             direction TB
-            AuthRateLimit["Auth / Rate Limiting"]
-            Loki["Loki (Logging)"]
-            Grafana["Grafana (Monitoring)"]
+
+            subgraph Features["Features"]
+                Logs["Logs"]
+            end
+
+            subgraph Core["Gateway Core"]
+                direction TB
+                Control["Control Plane"]
+                Data["Data Plane"]
+            end
+
+            subgraph UserAccess["User Access"]
+                direction LR
+                Microservices["Microservices"]
+                Users["Users"]
+            end
         end
     end
 
-    %% Connections
-    WebClients --"HTTP Request"--> NGINX
-    NGINX --"HTTP Response"--> WebClients
-    NGINX <--"gRPC Routing"--> ServiceA
-    NGINX <--"gRPC Routing"--> ServiceB
-    NGINX <--"gRPC Routing"--> ServiceC
+%% Connections
+    Clients --"Uploads Config/Registers Microservice"--> Dashboard
+    Dashboard --"Downloads Config"--> Clients
+Dashboard --"Manages"--> Config
 
-    NGINX --"Validates"--> AuthRateLimit
-    NGINX --"Writes"--> Loki
-    Loki --> Grafana
+Control --"Update Config/Register Services"--> Data
+Control --Displays--> Dashboard
+Control --Reads--> Config
+Control --"Reads"--> Logs
+Data --"Routing/Rate Limiting"--> Microservices
+Data --Requests--> Users
+Users --Authentication--> Data
 
-    %% Colours
-    classDef outer fill:#b3ebf2,stroke:#31c9dc,stroke-width:0.2em,color:#000;
-    class Public_Internet outer;
-    class Project outer;
+%% Colours
+classDef outer fill:#b3ebf2,stroke:#31c9dc,stroke-width:0.2em,color:#000;
+class Frontend outer;
+class Backend outer;
 
-    classDef inner fill:#ebf2b3,stroke:#dae772,stroke-width:0.2em,color:#000;
-    class Gateway inner;
-    class Gateway_Features inner;
-    class Microservices inner;
+classDef inner fill:#ebf2b3,stroke:#dae772,stroke-width:0.2em,color:#000;
+class Core inner;
+class Features inner;
+class UserAccess inner;
 
-    classDef nodes fill:#f2b3eb,stroke:#e772da,stroke-width:0.2em,color:#000;
-    class WebClients nodes;
-    class NGINX nodes;
-    class ServiceA nodes;
-    class ServiceB nodes;
-    class ServiceC nodes;
-    class AuthRateLimit nodes;
-    
-    classDef logs fill:#f2dab3,stroke:#e7ba72,stroke-width:0.2em,color:#000;
-    class Loki logs;
-    class Grafana logs;
+classDef nodes fill:#f2b3eb,stroke:#e772da,stroke-width:0.2em,color:#000;
+class Control nodes;
+class Data nodes;
+class Clients nodes;
+class Logs nodes;
+class Config nodes;
+class Dashboard nodes;
+class Microservices nodes;
+class Users nodes;
 
-    linkStyle default stroke:#000,stroke-width:0.2em;
-
+linkStyle default stroke:#000,stroke-width:0.2em;
 ```
