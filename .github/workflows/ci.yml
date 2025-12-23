@@ -6,7 +6,7 @@ jobs:
   unit-test:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout
-      - uses: actions/setup-go
+      - uses: actions/checkout@v6.0.1
+      - uses: actions/setup-go@v6.1.0
       - name: Run Unit Tests
         run: make unit-tests
