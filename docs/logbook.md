@@ -10,7 +10,7 @@
 
 ## 22nd October
 - Had a look at microservices libraries - found some interesting ones
-    - Go-kit: build from stratch, not ideal for this project
+    - Go-kit: build from scratch, not ideal for this project
     - Go-micro: might be what I'm looking for
 - Had a look at NodeRed
 - Took at look at existing API Gateways
@@ -78,7 +78,7 @@
 - Running
   - Postman to test the APIs
   - `nginx -t` to validate the config
-  - Github Actions for CI
+  - GitHub Actions for CI
   - Maybe docker for APIs?
 - Cloud
   - AWS/EC2
@@ -130,7 +130,7 @@
 ## 26th November
 Requirement: Gateway has to be able to handle high load
 - Rust, Go and C++ are the best at high-performance concurrency https://medium.com/@lpramithamj/the-race-to-1m-tasks-35018c35e347
-- Express is mostly for NodeJS coding, while javascript is good, it's not what I'm looking for in terms of concurrency
+- Express is mostly for Node.js coding, while javascript is good, it's not what I'm looking for in terms of concurrency
 - Kong is built on top of NGINX
 - NGINX has an API Management Module, that performs better than Kong
 - Kong comes preloaded with a lot of the features I want to use
@@ -144,3 +144,13 @@ Requirement: Requests should be processed quickly
 - Created some basic microservices using net/http
 - Created some unit tests for the microservices to make sure there were working as expected
 - Makefile to automate running the net/http microservices and the unit tests
+- Updated the architecture in Mermaid
+
+## 24th December
+- Started on creating the data plane with NGINX (why NGINX?)
+- Created a simple dataplane
+- Changed the microservices to run on different ports (defeats the purpose of using NGINX if all same port)
+- Learned how to write an NGINX config
+- Containerised the Microservices and the Dataplane in docker
+- Added docker make targets
+- Challenges: Setting up dockerfiles, NGINX config

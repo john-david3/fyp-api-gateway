@@ -1,4 +1,4 @@
-package apis
+package services
 
 import (
 	"encoding/json"
@@ -9,16 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCreateAPI_main(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	w := httptest.NewRecorder()
-
-	mainRoute(w, req)
-	res := w.Result()
-	require.Equal(t, http.StatusOK, res.StatusCode)
-}
-
-func TestCreateAPI_products(t *testing.T) {
+func TestProducts(t *testing.T) {
 	var body map[string]string
 
 	req := httptest.NewRequest(http.MethodGet, "/products", nil)
@@ -34,7 +25,23 @@ func TestCreateAPI_products(t *testing.T) {
 	require.Equal(t, "/products", body["path"])
 }
 
-func TestCreateAPI_health(t *testing.T) {
+func TestOrders(t *testing.T) {
+	var body map[string]string
+
+	req := httptest.NewRequest(http.MethodGet, "/orders", nil)
+	w := httptest.NewRecorder()
+
+	orders(w, req)
+	res := w.Result()
+	require.Equal(t, http.StatusOK, res.StatusCode)
+
+	err := json.NewDecoder(res.Body).Decode(&body)
+	require.NoError(t, err)
+	require.Equal(t, "orders", body["service"])
+	require.Equal(t, "/orders", body["path"])
+}
+
+func TestHealth(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	w := httptest.NewRecorder()
 
