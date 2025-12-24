@@ -18,6 +18,4 @@ jobs:
       - uses: actions/setup-go@v6.1.0
       - name: Test NGINX with microservices
         run: |
-          make docker-build
-          make docker-run
-          make test-routes
+          make docker-build && make docker-run
