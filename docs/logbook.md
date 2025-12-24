@@ -144,7 +144,13 @@ Requirement: Requests should be processed quickly
 - Created some basic microservices using net/http
 - Created some unit tests for the microservices to make sure there were working as expected
 - Makefile to automate running the net/http microservices and the unit tests
+- Updated the architecture in Mermaid
 
 ## 24th December
 - Started on creating the data plane with NGINX (why NGINX?)
-- 
+- Created a simple dataplane
+- Changed the microservices to run on different ports (defeats the purpose of using NGINX if all same port)
+- Learned how to write an NGINX config
+- Containerised the Microservices and the Dataplane in docker
+- Added docker make targets
+- Challenges: Setting up dockerfiles, NGINX config
