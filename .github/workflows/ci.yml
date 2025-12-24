@@ -1,6 +1,17 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - "main"
+    paths-ignore:
+      - "**.md"
+      - "docs/"
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
 
 jobs:
   unit-test:
