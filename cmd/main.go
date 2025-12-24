@@ -1,5 +1,9 @@
 package main
 
-func main() {
+import (
+	"fyp-api-gateway/services"
+)
 
+func main() {
+	services.Run()
 }
