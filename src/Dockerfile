@@ -1,0 +1,1 @@
+# Store the nginxConfig file in /etc/nginxConfig/

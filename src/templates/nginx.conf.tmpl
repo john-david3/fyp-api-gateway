@@ -16,27 +16,26 @@ http{
 
     access_log /var/log/nginx/access.log main;
 
-    
-    upstream product_service {
-        server services:9001;
+    {{/* Upstreams */ -}}
+    {{- range .Connection }}
+    {{- range .Routes }}
+    upstream {{ .Upstream.Name }} {
+        server services:{{ .Upstream.Port }};
     }
-    upstream order_service {
-        server services:9002;
-    }
+    {{- end }}
+    {{- end }}
 
-    
+    {{/* Servers */ -}}
+    {{ range .Connection }}
     server {
-        listen 8080;
-        server_name localhost;
-    
-        location /products {
-            proxy_pass http://product_service;
+        listen {{ .Port }};
+        server_name {{ .Host }};
+    {{ range .Routes }}
+        location {{ .Path }} {
+            proxy_pass http://{{ .Upstream.Name }};
         }
-    
-        location /orders {
-            proxy_pass http://order_service;
-        }
-    
+    {{ end }}
     }
+    {{- end }}
 
 }
