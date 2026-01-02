@@ -2,16 +2,16 @@ package config
 
 type (
 	GatewayConfig struct {
-		Connection []Connection `yaml:"connection" mapstructure:"connection"`
+		Connections []Connections `yaml:"connections" mapstructure:"connections"`
 	}
 
-	Connection struct {
-		Host   string  `yaml:"host"    mapstructure:"host"`
-		Port   int     `yaml:"port"    mapstructure:"port"`
-		Routes []Route `yaml:"routes"  mapstructure:"routes"`
+	Connections struct {
+		Host   string   `yaml:"host"    mapstructure:"host"`
+		Port   int      `yaml:"port"    mapstructure:"port"`
+		Routes []Routes `yaml:"routes"  mapstructure:"routes"`
 	}
 
-	Route struct {
+	Routes struct {
 		Path     string   `yaml:"path"     mapstructure:"path"`
 		Upstream Upstream `yaml:"upstream" mapstructure:"upstream"`
 	}

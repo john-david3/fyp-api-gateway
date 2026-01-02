@@ -3,16 +3,15 @@
 #
 
 connections:
-  - name: services
-    host: localhost
+  - host: localhost
     port: 8080
     routes:
       - path: /products
         upstream:
-          name: products_service
+          name: product_service
           port: 9001
           
       - path: /orders
         upstream:
-          name: orders_service
+          name: order_service
           port: 9002

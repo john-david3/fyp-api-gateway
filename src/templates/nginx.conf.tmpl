@@ -17,7 +17,7 @@ http{
     access_log /var/log/nginx/access.log main;
 
     {{/* Upstreams */ -}}
-    {{- range .Connection }}
+    {{- range .Connections }}
     {{- range .Routes }}
     upstream {{ .Upstream.Name }} {
         server services:{{ .Upstream.Port }};
@@ -26,7 +26,7 @@ http{
     {{- end }}
 
     {{/* Servers */ -}}
-    {{ range .Connection }}
+    {{ range .Connections }}
     server {
         listen {{ .Port }};
         server_name {{ .Host }};

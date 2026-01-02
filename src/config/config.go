@@ -13,14 +13,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const (
-	GatewayConfigFileName = "gateway.yaml"
-	GatewayConfigDirName  = "/etc/config/"
-	NGINXConfigDirName    = "../../dataplane/nginx/"
-	NGINXConfigFileName   = "nginx.conf"
-	NGINXUserDirName      = "/dataplane/nginx/users/"
-)
-
 func RegisterConfigFile() (*GatewayConfig, error) {
 	// Check if the file exists
 	configFile, err := checkFileExists(GatewayConfigDirName + GatewayConfigFileName)
@@ -86,7 +78,6 @@ func renderConfigsAtomically(allConfigs map[string]string) error {
 	return nil
 }
 
-
 func renderNginxTemplate(gatewayCfg *GatewayConfig) error {
 	tmpl, err := template.ParseFiles("../templates/nginx.conf.tmpl")
 	if err != nil {
@@ -116,7 +107,7 @@ func checkFileExists(filePath string) (string, error) {
 		return filePath, nil
 	}
 
-	return "", errors.New("filepath does not contain a valid config file")
+	return "", errors.New("filepath does not contain a valid config file: " + filePath)
 }
 
 func loadAndValidateConfigFile(filepath string) (*GatewayConfig, error) {

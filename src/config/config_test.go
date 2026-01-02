@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+
 	"strings"
 	"testing"
 
@@ -10,31 +11,22 @@ import (
 )
 
 func TestRegisterConfigFile(t *testing.T) {
-	err := os.MkdirAll(GatewayConfigDirName, 0755)
-	require.NoError(t, err)
+	GatewayConfigDirName = "../../test/configs/gateway/"
 
 	filePath := filepath.Join(GatewayConfigDirName, GatewayConfigFileName)
-	file, err := os.Create(filePath)
+	_, err := os.Stat(filePath)
 	require.NoError(t, err)
 
-	defer removeFilePath(t, GatewayConfigDirName)
-
-	fileBody, err := os.ReadFile("../../test/configs/gateway.yaml")
+	gatewayConfig, err := RegisterConfigFile()
 	require.NoError(t, err)
 
-	err = os.WriteFile(file.Name(), fileBody, 0755)
-	require.NoError(t, err)
-
-	err = file.Close()
-	require.NoError(t, err)
-
-	_, err = RegisterConfigFile()
-	require.NoError(t, err)
+	expectedConfig := createDummyGatewayConfig()
+	require.Equal(t, expectedConfig, gatewayConfig)
 }
 
 func TestUpdateNginxConfig(t *testing.T) {
 	cfg := createDummyGatewayConfig()
-	err := UpdateNginxConfig(NGINXConfigDirName+NGINXConfigFileName, "", &cfg)
+	err := UpdateNginxConfig(NGINXConfigDirName+NGINXConfigFileName, "", cfg)
 	require.NoError(t, err)
 
 	// read the new file
@@ -67,13 +59,13 @@ func removeFilePath(t *testing.T, filename string) {
 	require.NoError(t, err)
 }
 
-func createDummyGatewayConfig() GatewayConfig {
-	return GatewayConfig{
-		Connection: []Connection{
+func createDummyGatewayConfig() *GatewayConfig {
+	return &GatewayConfig{
+		Connections: []Connections{
 			{
 				Host: "localhost",
 				Port: 8080,
-				Routes: []Route{
+				Routes: []Routes{
 					{
 						Path: "/products",
 						Upstream: Upstream{
