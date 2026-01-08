@@ -17,7 +17,10 @@ func TestRegisterConfigFile(t *testing.T) {
 	_, err := os.Stat(filePath)
 	require.NoError(t, err)
 
-	gatewayConfig, err := RegisterConfigFile()
+	NGINXTemplateDirName = "../templates/"
+	NGINXDirName = "../../test/configs/nginx/"
+	store := NewConfigStore()
+	gatewayConfig, err := RegisterConfigFile(store)
 	require.NoError(t, err)
 
 	expectedConfig := createDummyGatewayConfig()
@@ -26,7 +29,9 @@ func TestRegisterConfigFile(t *testing.T) {
 
 func TestUpdateNginxConfig(t *testing.T) {
 	cfg := createDummyGatewayConfig()
-	err := UpdateNginxConfig(NGINXDirName+NGINXConfigFileName, "", cfg)
+	store := NewConfigStore()
+
+	err := UpdateNginxConfig(NGINXDirName+NGINXConfigFileName, "", cfg, store)
 	require.NoError(t, err)
 
 	// read the new file

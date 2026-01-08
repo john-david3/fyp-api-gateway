@@ -5,6 +5,7 @@ var (
 	GatewayConfigFileName = "gateway.yaml"
 
 	NGINXDirName          = "/etc/nginx/"
+	NGINXTemplateDirName  = "/etc/nginx/"
 	NGINXConfigFileName   = "nginx.conf"
 	NGINXTemplateFileName = "nginx.conf.tmpl"
 

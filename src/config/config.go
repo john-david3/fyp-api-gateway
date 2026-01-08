@@ -139,7 +139,7 @@ Uses templates to load the config back into `/etc/nginx`. Called by `UpdateNginx
 */
 func renderNginxTemplate(gatewayCfg *GatewayConfig) (string, error) {
 	// load the template file
-	tmpl, err := template.ParseFiles(NGINXDirName + NGINXTemplateFileName)
+	tmpl, err := template.ParseFiles(NGINXTemplateDirName + NGINXTemplateFileName)
 	if err != nil {
 		return "", err
 	}
