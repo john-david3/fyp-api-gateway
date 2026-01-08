@@ -4,7 +4,9 @@ var (
 	GatewayConfigDirName  = "/etc/config/"
 	GatewayConfigFileName = "gateway.yaml"
 
-	NGINXConfigDirName  = "../../dataplane/nginx/"
-	NGINXConfigFileName = "nginx.conf"
-	NGINXUserDirName    = "/dataplane/nginx/users/"
+	NGINXDirName          = "/etc/nginx/"
+	NGINXConfigFileName   = "nginx.conf"
+	NGINXTemplateFileName = "nginx.conf.tmpl"
+
+	WatcherDirName = "/etc/config"
 )

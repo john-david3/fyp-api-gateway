@@ -21,3 +21,16 @@ type (
 		Port int    `yaml:"port" mapstructure:"port"`
 	}
 )
+
+type (
+	ConfigMetadata struct {
+		Version   string `yaml:"version"   mapstructure:"version"`
+		Checksum  string `yaml:"checksum"  mapstructure:"checksum"`
+		Timestamp string `yaml:"timestamp" mapstructure:"timestamp"`
+	}
+
+	ConfigPayload struct {
+		Version string `yaml:"version" mapstructure:"version"`
+		Config  string `yaml:"config"  mapstructure:"config"`
+	}
+)

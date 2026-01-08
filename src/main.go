@@ -1,8 +1,10 @@
-package src
+package main
 
 import (
 	"context"
+	"fyp-api-gateway/src/api"
 	"fyp-api-gateway/src/config"
+	"fyp-api-gateway/src/watcher"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -28,12 +30,19 @@ func main() {
 		}
 	}()
 
-	gatewayConfig, err := config.RegisterConfigFile()
+	store := config.NewConfigStore()
+
+	gatewayConfig, err := config.RegisterConfigFile(store)
 	if err != nil {
 		slog.Error("Error reading config file", "error", err)
 		return
 	}
 
-	config.Watch(gatewayConfig)
+	go watcher.Watch(gatewayConfig, store)
 
+	err = api.HostApi(store)
+	if err != nil {
+		slog.Error("Error creating api", "error", err)
+		cancel()
+	}
 }

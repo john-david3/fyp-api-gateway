@@ -15,3 +15,8 @@ connections:
         upstream:
           name: order_service
           port: 9002
+
+      - path: /test
+        upstream:
+          name: test_service
+          port: 9003

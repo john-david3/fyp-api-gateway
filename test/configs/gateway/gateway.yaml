@@ -10,7 +10,7 @@ connections:
         upstream:
           name: product_service
           port: 9001
-          
+
       - path: /orders
         upstream:
           name: order_service

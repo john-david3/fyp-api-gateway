@@ -26,11 +26,11 @@ func TestRegisterConfigFile(t *testing.T) {
 
 func TestUpdateNginxConfig(t *testing.T) {
 	cfg := createDummyGatewayConfig()
-	err := UpdateNginxConfig(NGINXConfigDirName+NGINXConfigFileName, "", cfg)
+	err := UpdateNginxConfig(NGINXDirName+NGINXConfigFileName, "", cfg)
 	require.NoError(t, err)
 
 	// read the new file
-	file, err := os.ReadFile(NGINXConfigDirName + NGINXConfigFileName)
+	file, err := os.ReadFile(NGINXDirName + NGINXConfigFileName)
 	require.NoError(t, err)
 	expectedFile, err := os.ReadFile("../../test/configs/nginx/nginx.conf")
 	require.NoError(t, err)
@@ -52,11 +52,6 @@ func removeWhitespace(f string) string {
 	}
 
 	return strings.Join(out, "\n")
-}
-
-func removeFilePath(t *testing.T, filename string) {
-	err := os.RemoveAll(filename)
-	require.NoError(t, err)
 }
 
 func createDummyGatewayConfig() *GatewayConfig {

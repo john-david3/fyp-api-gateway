@@ -1,6 +1,7 @@
-package config
+package watcher
 
 import (
+	"fyp-api-gateway/src/config"
 	"log/slog"
 
 	"github.com/fsnotify/fsnotify"
@@ -8,7 +9,8 @@ import (
 
 // TODO: Write unit tests for this
 
-func Watch(gatewayConfig *GatewayConfig) {
+func Watch(gatewayConfig *config.GatewayConfig, store *config.ConfigStore) {
+	slog.Info("Starting file watcher")
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		slog.Error("error creating watcher", "error", err)
@@ -16,6 +18,7 @@ func Watch(gatewayConfig *GatewayConfig) {
 	defer watcher.Close()
 
 	go func() {
+		slog.Info("File watcher started")
 		for {
 			select {
 			case event, ok := <-watcher.Events:
@@ -23,9 +26,15 @@ func Watch(gatewayConfig *GatewayConfig) {
 					return
 				}
 				slog.Info("watcher event:", "event", event)
-				if event.Has(fsnotify.Write) {
+				if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) || event.Has(fsnotify.Remove) {
 					slog.Info("watcher detected modified file:", "file", event.Name)
-					err = UpdateNginxConfig(event.Name, "", gatewayConfig)
+
+					gatewayConfig, err = config.LoadAndValidateConfigFile(event.Name)
+					if err != nil {
+						slog.Error("error loading config", "error", err)
+					}
+
+					err = config.UpdateNginxConfig(event.Name, "", gatewayConfig, store)
 					if err != nil {
 						slog.Error("error updating config", "error", err)
 					}
@@ -39,7 +48,7 @@ func Watch(gatewayConfig *GatewayConfig) {
 		}
 	}()
 
-	err = watcher.Add("../../dataplane/nginx/")
+	err = watcher.Add(config.WatcherDirName)
 	if err != nil {
 		slog.Error("error adding watcher:", "error", err)
 	}

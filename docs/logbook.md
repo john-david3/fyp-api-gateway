@@ -185,3 +185,20 @@ Requirement: Requests should be processed quickly
 ## 1st January
 - Create a file watcher for the gateway config, when event happens, it triggers the update NGINX function
 - Currently, this works for a single user, I must implement database to make it multi-user compatible
+
+## 3rd January
+- Did something, kinda forgot what tho, probably really cool though
+
+## 4th January
+- Containerised the control plane
+
+## 5th January
+- Figuring out how to send the updated NGINX config from the control plane to the data plane
+- Created a ConfigStore object which will allow me to serve an API
+- Will have the dataplane poll?? the API in search of a newer NGINX config
+
+## 7th January
+- Fix problem where data plane could not connect to the control plane container
+- Created new file for hosting the API for the data plane to get the updated config
+- Created a polling system in the data plane
+- Need to figure out why NGINX is not reloading correctly with `nginx -s reload`
