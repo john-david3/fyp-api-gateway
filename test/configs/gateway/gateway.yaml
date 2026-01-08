@@ -1,0 +1,17 @@
+#
+# Configuration file for API Gateway
+#
+
+connections:
+  - host: localhost
+    port: 8080
+    routes:
+      - path: /products
+        upstream:
+          name: product_service
+          port: 9001
+
+      - path: /orders
+        upstream:
+          name: order_service
+          port: 9002

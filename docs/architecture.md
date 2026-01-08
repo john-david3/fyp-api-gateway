@@ -8,7 +8,7 @@ flowchart TB
             direction LR
             Clients["Clients"]
             Dashboard["Dashboard"]
-            Config["Config File"]
+            GatewayConfig["GatewayConfig File"]
         end
 
         subgraph Backend["Backend"]
@@ -33,13 +33,13 @@ flowchart TB
     end
 
 %% Connections
-    Clients --"Uploads Config/Registers Microservice"--> Dashboard
-    Dashboard --"Downloads Config"--> Clients
-Dashboard --"Manages"--> Config
+    Clients --"Uploads GatewayConfig/Registers Microservice"--> Dashboard
+    Dashboard --"Downloads GatewayConfig"--> Clients
+Dashboard --"Manages"--> GatewayConfig
 
-Control --"Update Config/Register Services"--> Data
+Control --"Update GatewayConfig/Register Services"--> Data
 Control --Displays--> Dashboard
-Control --Reads--> Config
+Control --Reads--> GatewayConfig
 Control --"Reads"--> Logs
 Data --"Routing/Rate Limiting"--> Microservices
 Data --Requests--> Users
@@ -60,7 +60,7 @@ class Control nodes;
 class Data nodes;
 class Clients nodes;
 class Logs nodes;
-class Config nodes;
+class GatewayConfig nodes;
 class Dashboard nodes;
 class Microservices nodes;
 class Users nodes;
