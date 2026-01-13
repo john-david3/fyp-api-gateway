@@ -6,7 +6,7 @@
 
 ## 6th October
 - Make a skeleton file structure
-- Created sample NGINX nginxConfig for api gateway
+- Created sample NGINX config for api gateway
 
 ## 22nd October
 - Had a look at microservices libraries - found some interesting ones
@@ -29,7 +29,7 @@
 
 ### Runnable API Gateway
 - Initially going to focus on getting this to run locally, if time, make it cloud platform (v2)
-- User should have the gateway installed, and will only need a nginxConfig file and the set of commands to interact with the gateway
+- User should have the gateway installed, and will only need a config file and the set of commands to interact with the gateway
 - Features
   - NGINX data plane
     - Request Routing
@@ -40,7 +40,7 @@
     - Parse configs
     - Validate configs are correct
     - Generate NGINX configs
-    - Reload the NGINX nginxConfig is there are changes
+    - Reload the NGINX config is there are changes
     - Register new microservices
     - Enforce policies (Auth, rate limit, etc)
     - Maybe:
@@ -48,16 +48,16 @@
       - Interactive CLI?
 - User Workflow (* = "not done by user")
   - Download the api gateway
-  - Create a nginxConfig file (register the microservices)
-  - *GatewayConfig generation
-  - *NGINX restarts with new nginxConfig (logging)
+  - Create a config file (register the microservices)
+  - *Config generation
+  - *NGINX restarts with new config (logging)
   - Update frontend API URLs
   - *Gateway should route correctly
   - Can check logs on Grafana, may need to run another command to display grafana dashboard
 
 ### v2 Cloud Implementation Additions
 - Multi-tenancy: Use Lua scripting to dynamically assign microservices to different NGINX instances
-  - Each tenant has their own hosted nginxConfig file
+  - Each tenant has their own hosted config file
   - Each tenant must have their own API URL
 - Web management dashboard
   - Logs could be displayed here
@@ -77,7 +77,7 @@
   - Make - to run simple automated commands
 - Running
   - Postman to test the APIs
-  - `nginx -t` to validate the nginxConfig
+  - `nginx -t` to validate the config
   - GitHub Actions for CI
   - Maybe docker for APIs?
 - Cloud
@@ -91,7 +91,7 @@
 - Logging
 - Rate Limiting
 - Configuration Management
-- Ease of Use - user should only have to change a nginxConfig, gateway takes care of everything else
+- Ease of Use - user should only have to change a config, gateway takes care of everything else
 - High Availability
   - Health checks
   - Graceful retries - if a backend connection, fails to n times, x seconds apart to reconnect, don't completely kill the program over one failure
@@ -103,7 +103,7 @@
 #### Nice to Haves
 - Authentication - Basic Auth or JWT
 - Encrypted transmission
-- Scalability - Online platform could dynamically create new NGINX instances when the nginxConfig file gets to a certain size (or based on region)
+- Scalability - Online platform could dynamically create new NGINX instances when the config file gets to a certain size (or based on region)
 
 ## 12th November
 - Remade architecture
@@ -150,7 +150,7 @@ Requirement: Requests should be processed quickly
 - Started on creating the data plane with NGINX (why NGINX?)
 - Created a simple dataplane
 - Changed the microservices to run on different ports (defeats the purpose of using NGINX if all same port)
-- Learned how to write an NGINX nginxConfig
+- Learned how to write an NGINX config
 - Containerised the Microservices and the Dataplane in docker
 - Added docker make targets
 - Challenges: Setting up dockerfiles, NGINX nginxConfig
@@ -202,3 +202,85 @@ Requirement: Requests should be processed quickly
 - Created new file for hosting the API for the data plane to get the updated config
 - Created a polling system in the data plane
 - Need to figure out why NGINX is not reloading correctly with `nginx -s reload`
+
+## 8th January
+- Control plane now links to data plane
+- Fixed unit tests
+
+## 9-10th January
+### AWS API Gateway
+- "At any scale"
+- Restful APIs and WebSocket APIs
+- Supports containerised and serverless workloads and web applications
+- "API Gateway Portals"
+- Up to hundred of thousands of concurrent API calls
+- Traffic management, CORS support, authorisation, access control, throttling, monitoring, API version management
+- supports HTTP APIs, REST APIs and Websocket APIs
+- 90c per million requests
+- Monitor performance metrics on API calls, data latency, and error rates from a dashboard using Amazon CloudWatch
+- Pay-as-you-go
+- Can generate SDKs for Android, JavaScript and iOS
+- Developer portal
+- Rate Limiting/Throttling
+- API code must be hooked up to AWS Lambda
+- JWT Auth, AWS identity
+- https://aws.amazon.com/api-gateway/features/
+- https://daniil-sokolov.medium.com/performance-analysis-of-lambda-backed-rest-api-on-the-aws-api-gateway-for-python-go-and-typescript-bc296732e5ae
+
+### Azure API Management
+- Routing, security, rate limiting/throttling, caching and observability
+- API keys, JWT, certificates
+- Packaged as a Linux-based docker container deployed to K8s
+- Policies
+- Users and user groups
+- https://learn.microsoft.com/en-us/azure/api-management/api-management-key-concepts
+
+### Kong Gateway
+- Runs into of REST APIs
+- Extend with modules and plugins
+- Designed to be run on decentralised architectures, such as hybrid-cloud and multi-cloud deployments
+- AI Gateway, Authentication, Rate Limiting, Observability, Load balancing
+- https://developer.konghq.com/gateway/
+
+### Commonalities
+#### Functional requirements
+- Request Routing
+  - Mostly HTTP, REST
+  - AWS and Kong support WebSockets natively
+- Authentication
+  - All support JWT
+  - Amazon and Azure have their own auth systems
+  - API key validation
+  - Support OAuth2
+- Rate Limiting/Throttling
+- Observability
+  - Logging
+  - Monitoring
+- Caching - reduces load by storing and serving repeated queries
+
+#### Non-Functional Requirements
+- Cost Effective
+  - https://aws.amazon.com/api-gateway/pricing/
+  - https://azure.microsoft.com/en-us/pricing/details/api-management/
+- Low Latency
+- Scalability
+- Availability
+  - https://konghq.com/legal/service-level-agreement
+  - https://learn.microsoft.com/en-us/azure/api-management/api-management-key-concepts#developer-portal
+  - https://aws.amazon.com/api-gateway/sla/
+- Security
+- Maintainability
+  - https://medium.com/@communication_93652/the-importance-of-separation-of-concerns-in-software-engineering-8d5964ba65d9
+
+### How can my Gateway be different
+- Education?
+- Be explicit about what I am not building - hyper-scale multi-user AZ global distribution system whatever
+- Ideas
+  1. Specialise in a narrow domain
+  2. Emphasize developer ergonomics
+  3. Make non-functional behaviour explicit and inspectable
+  4. Focus on one or two NFRs, done well
+  5. Make it self-hosted or transparent
+
+## 12th January
+- https://codeworks.me/blog/why-javascript-is-used-in-web-development/

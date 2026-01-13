@@ -1,0 +1,41 @@
+services:
+  data-plane:
+    build:
+      context: .
+      dockerfile: dataplane/Dockerfile
+    container_name: data-plane
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - gateway_net
+
+  services:
+    build:
+      context: .
+      dockerfile: services/Dockerfile
+    container_name: services
+    ports:
+      - "9001:9001"
+      - "9002:9002"
+    restart: unless-stopped
+    networks:
+      - gateway_net
+
+  control-plane:
+    build:
+      context: .
+      dockerfile: src/Dockerfile
+    container_name: control-plane
+    ports:
+      - "8081:8081"
+    volumes:
+      - "./config:/etc/config"
+      - "./src/templates/nginx.conf.tmpl:/etc/nginx/nginx.conf.tmpl:ro"
+    restart: unless-stopped
+    networks:
+      - gateway_net
+
+networks:
+  gateway_net:
+    driver: bridge
