@@ -3,14 +3,14 @@ GORUN  = $(GOCMD) run
 GOTEST = $(GOCMD) test
 
 DOCKER      = docker
-DOCKERRUN   = $(DOCKER) run
-DOCKERBUILD = $(DOCKER) build
-DOCKERKILL  = $(DOCKER) rm -f
-
+COMPOSE     = $(DOCKER) compose
 PROJECT_DIR = cmd
 MAIN        = main.go
 
 HOST = http://localhost:8080
+
+WAIT_RETRIES=20
+WAIT_INTERVAL=3
 
 run:
 	@echo "Running microservices"
@@ -22,15 +22,29 @@ unit-tests:
 
 docker-build:
 	@echo "Building Docker Files"
-	@docker compose up --build
+	@${COMPOSE} build
 
 docker-run:
 	@echo "Running docker containers"
-	@docker compose up
+	@${COMPOSE} up -d
 
 docker-stop:
 	@echo "Killing all containers"
-	@docker compose down
+	@${COMPOSE} down
+
+wait:
+	@echo "Waiting for $(SERVICE) on port $(PORT)..."
+	@for i in $(shell seq 1 $(WAIT_RETRIES)); do \
+		if curl -s http://localhost:$(PORT)/healthz >/dev/null 2>&1; then \
+			echo "$(SERVICE) is ready"; \
+			break; \
+		fi; \
+		echo "Waiting... ($$i)"; \
+		sleep $(WAIT_INTERVAL); \
+	done
+
+test-docker: docker-build docker-run wait
+	@$(MAKE) docker-stop
 
 test-routes:
 	@echo "sending routing requests"
