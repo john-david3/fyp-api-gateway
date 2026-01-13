@@ -9,7 +9,7 @@ MAIN        = main.go
 
 HOST = http://localhost:8080
 
-WAIT_RETRIES=20
+WAIT_RETRIES=5
 WAIT_INTERVAL=3
 
 run:
