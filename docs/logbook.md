@@ -302,3 +302,11 @@ Requirement: Requests should be processed quickly
   - build an API gateway that explains what your configuration does and what will change before it goes live, instead of just applying it and hoping for the best
   - Solves: understanding what a configuration does
   - correctness and understanding first
+
+## 17th January
+- Finished logging, doesn't log NGINX access/error as far as I'm aware
+- https://blog.nginx.org/blog/rate-limiting-nginx
+- Started rate limiting
+- Rate limiting works by keeping track of each IP address that requests a service in binary format
+- Allows bursty requests to cope with expected HTTP traffic and buffer the requests
+- Modified the NGINX template to accept custom rate limit parameters (need to put an upper bound on these)

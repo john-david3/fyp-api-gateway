@@ -10,13 +10,14 @@ connections:
         upstream:
           name: product_service
           port: 9001
+        rate-limit:
+          zone: 10
+          rate: 5
 
       - path: /orders
         upstream:
           name: order_service
           port: 9002
-
-      - path: /test
-        upstream:
-          name: test_service
-          port: 9003
+        rate-limit:
+          zone: 10
+          rate: 5
