@@ -16,6 +16,12 @@ http{
 
     access_log /var/log/nginx/access.log main;
 
+    {{- range .Connections }}
+    {{- range .Routes }}
+    limit_req_zone $binary_remote_addr zone={{ .Upstream.Name }}:{{ .RateLimit.Zone }}m rate={{ .RateLimit.Rate }}r/s;
+    {{- end }}
+    {{- end }}
+
     {{/* Upstreams */ -}}
     {{- range .Connections }}
     {{- range .Routes }}
@@ -32,6 +38,7 @@ http{
         server_name {{ .Host }};
     {{ range .Routes }}
         location {{ .Path }} {
+            limit_req zone={{ .Upstream.Name }} burst=12 delay=8;
             proxy_pass http://{{ .Upstream.Name }};
         }
     {{ end }}

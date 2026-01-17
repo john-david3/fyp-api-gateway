@@ -12,13 +12,19 @@ type (
 	}
 
 	Routes struct {
-		Path     string   `yaml:"path"     mapstructure:"path"`
-		Upstream Upstream `yaml:"upstream" mapstructure:"upstream"`
+		Path      string    `yaml:"path"       mapstructure:"path"`
+		Upstream  Upstream  `yaml:"upstream"   mapstructure:"upstream"`
+		RateLimit RateLimit `yaml:"rate-limit" mapstructure:"rate_limit"`
 	}
 
 	Upstream struct {
 		Name string `yaml:"name" mapstructure:"name"`
 		Port int    `yaml:"port" mapstructure:"port"`
+	}
+
+	RateLimit struct {
+		Zone int `yaml:"zone" mapstructure:"zone"`
+		Rate int `yaml:"rate" mapstructure:"rate"`
 	}
 )
 

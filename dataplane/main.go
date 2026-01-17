@@ -26,13 +26,13 @@ func main() {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
+	slog.Info("Started polling for new NGINX config")
 	for {
 		select {
 		case <-ctx.Done():
 			return
 
 		case <-ticker.C:
-			slog.Info("Polling for new NGINX config")
 			meta, err := fetchMetadata()
 			if err != nil {
 				slog.Error("failed to fetch metadata", "error", err)
