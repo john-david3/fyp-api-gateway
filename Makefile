@@ -50,4 +50,3 @@ test-routes:
 	@echo "sending routing requests"
 	curl "${HOST}/products"
 	curl "${HOST}/orders"
-	curl "${HOST}/test"

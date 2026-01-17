@@ -284,3 +284,21 @@ Requirement: Requests should be processed quickly
 
 ## 12th January
 - https://codeworks.me/blog/why-javascript-is-used-in-web-development/
+
+## 13th January
+- Changed from Dockerfiles to docker-compose
+- Decisions: How to implement observability
+  - Need to be able to display the logs: Grafana is good for this
+  - How to check the logs from the gateway to Grafana?
+  - Loki, Grafana, Promtail, Alloy, OTel, Prometheus, InfluxDB, FluentBit, ELK/EFK Stack, Plain logs file
+
+## 14th January
+- How is this API gateway different?
+  - How can a developer understand what their configuration does before it actually goes live?
+  - Make the configuration easy to understand
+  - Catch confusing or risky configurations early
+  - Show the impact of changes before and after applying them
+  - Apply changes safely when they are accepted
+  - build an API gateway that explains what your configuration does and what will change before it goes live, instead of just applying it and hoping for the best
+  - Solves: understanding what a configuration does
+  - correctness and understanding first
