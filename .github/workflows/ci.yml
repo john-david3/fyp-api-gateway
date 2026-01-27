@@ -27,5 +27,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.1
       - uses: actions/setup-go@v6.1.0
+      - name: Create .env file
+        run: |
+          cat <<EOF > .env
+          HTPASSWD_USER=${{ secrets.HTPASSWD_USER }}
+          HTPASSWD_PASS=${{ secrets.HTPASSWD_PASS }}
+          EOF
       - name: Test NGINX with microservices
         run: make test-docker

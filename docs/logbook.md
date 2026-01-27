@@ -313,3 +313,9 @@ Requirement: Requests should be processed quickly
 
 ## 19th January
 - Started implementing basic auth in NGINX
+
+## 27th January
+- Completed Basic Auth
+  - Used apache2-utils to create a password manager
+  - GitHub Secrets
+  - Curl to test the routes were working
