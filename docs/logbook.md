@@ -310,3 +310,12 @@ Requirement: Requests should be processed quickly
 - Rate limiting works by keeping track of each IP address that requests a service in binary format
 - Allows bursty requests to cope with expected HTTP traffic and buffer the requests
 - Modified the NGINX template to accept custom rate limit parameters (need to put an upper bound on these)
+
+## 19th January
+- Started implementing basic auth in NGINX
+
+## 27th January
+- Completed Basic Auth
+  - Used apache2-utils to create a password manager
+  - GitHub Secrets
+  - Curl to test the routes were working

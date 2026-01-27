@@ -13,6 +13,7 @@ connections:
         rate-limit:
           zone: 10
           rate: 5
+        auth: false
 
       - path: /orders
         upstream:
@@ -21,3 +22,13 @@ connections:
         rate-limit:
           zone: 10
           rate: 5
+        auth: false
+          
+      - path: /protected
+        upstream:
+          name: protected_service
+          port: 9003
+        rate-limit:
+          zone: 10
+          rate: 5
+        auth: true

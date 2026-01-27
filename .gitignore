@@ -1,6 +1,6 @@
 /output
 /dataplane/configs
 /.idea
-/env
+.env
 /.data
 /.src

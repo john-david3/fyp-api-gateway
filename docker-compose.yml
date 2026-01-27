@@ -8,9 +8,14 @@ services:
     build:
       context: .
       dockerfile: dataplane/Dockerfile
+      args:
+        HTPASSWD_USER: ${HTPASSWD_USER}
+        HTPASSWD_PASS: ${HTPASSWD_PASS}
     container_name: data-plane
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     restart: unless-stopped
     networks:
       - gateway_net
