@@ -15,6 +15,7 @@ type (
 		Path      string    `yaml:"path"       mapstructure:"path"`
 		Upstream  Upstream  `yaml:"upstream"   mapstructure:"upstream"`
 		RateLimit RateLimit `yaml:"rate-limit" mapstructure:"rate_limit"`
+		Auth      bool      `yaml:"auth"       mapstructure:"auth"`
 	}
 
 	Upstream struct {

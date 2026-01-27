@@ -9,6 +9,7 @@ import (
 func Run() {
 	go startProductService()
 	go startOrderService()
+	go startProtectedService()
 
 	select {}
 }
@@ -35,6 +36,16 @@ func startOrderService() {
 	}
 }
 
+func startProtectedService() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/protected", protected)
+	slog.Info("server running on port 9003")
+	err := http.ListenAndServe(":9003", mux)
+	if err != nil {
+		slog.Error("error starting protected service", "error", err)
+	}
+}
+
 func products(w http.ResponseWriter, r *http.Request) {
 	err := json.NewEncoder(w).Encode(map[string]string{
 		"service": "products",
@@ -48,6 +59,16 @@ func products(w http.ResponseWriter, r *http.Request) {
 func orders(w http.ResponseWriter, r *http.Request) {
 	err := json.NewEncoder(w).Encode(map[string]string{
 		"service": "orders",
+		"path":    r.URL.Path,
+	})
+	if err != nil {
+		slog.Error("error encoding json", "error", err)
+	}
+}
+
+func protected(w http.ResponseWriter, r *http.Request) {
+	err := json.NewEncoder(w).Encode(map[string]string{
+		"service": "protected",
 		"path":    r.URL.Path,
 	})
 	if err != nil {
