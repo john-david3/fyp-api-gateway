@@ -39,9 +39,17 @@ http{
 
     {{ range .Routes }}
         location {{ .Path }} {
-            {{if .Auth}}
+            {{if or .Auth.Basic .Auth.JWT}}
+            satisfy any;
+            {{- end }}
+
+            {{if .Auth.Basic}}
             auth_basic "Admin Access Only";
             auth_basic_user_file /etc/apache2/.htpasswd;
+            {{- end }}
+
+            {{if .Auth.JWT}}
+            auth_request /_auth
             {{- end }}
 
             limit_req zone={{ .Upstream.Name }} burst=12 delay=8;
@@ -50,5 +58,14 @@ http{
     {{ end }}
     }
     {{- end }}
+
+    location = /_auth {
+    internal;
+    proxy_pass http://auth_service/validate;
+
+    proxy_set_header Authorization $http_authorization;
+    proxy_set_header Context-Length "";
+    proxy_pass_request_body off;
+    }
 
 }

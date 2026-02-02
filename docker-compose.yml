@@ -42,7 +42,22 @@ services:
     volumes:
       - "./config:/etc/config"
       - "./src/templates/nginx.conf.tmpl:/etc/nginx/nginx.conf.tmpl:ro"
+      - "./public.pem:/etc/keys/public.pem"
     restart: unless-stopped
+    networks:
+      - gateway_net
+
+  auth-issuer:
+    build:
+      context: .
+      dockerfile: auth/Dockerfile
+    container_name: auth
+    volumes:
+      - ./private.pem:/etc/keys/private.pem:ro
+    environment:
+      PRIVATE_KEY_PATH: /etc/keys/private.pem
+    ports:
+      - "8089:8089"
     networks:
       - gateway_net
 

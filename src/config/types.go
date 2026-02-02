@@ -15,7 +15,7 @@ type (
 		Path      string    `yaml:"path"       mapstructure:"path"`
 		Upstream  Upstream  `yaml:"upstream"   mapstructure:"upstream"`
 		RateLimit RateLimit `yaml:"rate-limit" mapstructure:"rate_limit"`
-		Auth      bool      `yaml:"auth"       mapstructure:"auth"`
+		Auth      Auth      `yaml:"auth"       mapstructure:"auth"`
 	}
 
 	Upstream struct {
@@ -26,6 +26,11 @@ type (
 	RateLimit struct {
 		Zone int `yaml:"zone" mapstructure:"zone"`
 		Rate int `yaml:"rate" mapstructure:"rate"`
+	}
+
+	Auth struct {
+		Basic bool `yaml:"basic" mapstructure:"basic"`
+		JWT   bool `yaml:"jwt"   mapstructure:"jwt"`
 	}
 )
 

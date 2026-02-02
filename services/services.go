@@ -10,6 +10,7 @@ func Run() {
 	go startProductService()
 	go startOrderService()
 	go startProtectedService()
+	go startJwtService()
 
 	select {}
 }
@@ -46,6 +47,16 @@ func startProtectedService() {
 	}
 }
 
+func startJwtService() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/jwt", jwtRoute)
+	slog.Info("server running on port 9004")
+	err := http.ListenAndServe(":9004", mux)
+	if err != nil {
+		slog.Error("error starting jwt service", "error", err)
+	}
+}
+
 func products(w http.ResponseWriter, r *http.Request) {
 	err := json.NewEncoder(w).Encode(map[string]string{
 		"service": "products",
@@ -69,6 +80,16 @@ func orders(w http.ResponseWriter, r *http.Request) {
 func protected(w http.ResponseWriter, r *http.Request) {
 	err := json.NewEncoder(w).Encode(map[string]string{
 		"service": "protected",
+		"path":    r.URL.Path,
+	})
+	if err != nil {
+		slog.Error("error encoding json", "error", err)
+	}
+}
+
+func jwtRoute(w http.ResponseWriter, r *http.Request) {
+	err := json.NewEncoder(w).Encode(map[string]string{
+		"service": "jwt",
 		"path":    r.URL.Path,
 	})
 	if err != nil {

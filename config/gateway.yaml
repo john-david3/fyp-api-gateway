@@ -13,7 +13,9 @@ connections:
         rate-limit:
           zone: 10
           rate: 5
-        auth: false
+        auth:
+          basic: false
+          jwt: false
 
       - path: /orders
         upstream:
@@ -22,7 +24,9 @@ connections:
         rate-limit:
           zone: 10
           rate: 5
-        auth: false
+        auth:
+          basic: false
+          jwt: false
           
       - path: /protected
         upstream:
@@ -31,4 +35,17 @@ connections:
         rate-limit:
           zone: 10
           rate: 5
-        auth: true
+        auth:
+          basic: true
+          jwt: false
+
+      - path: /jwt
+        upstream:
+          name: jwt_service
+          port: 9004
+        rate-limit:
+          zone: 10
+          rate: 5
+        auth:
+          basic: false
+          jwt: true

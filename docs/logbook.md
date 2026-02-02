@@ -316,6 +316,10 @@ Requirement: Requests should be processed quickly
 
 ## 27th January
 - Completed Basic Auth
+  - https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-http-basic-authentication/
   - Used apache2-utils to create a password manager
   - GitHub Secrets
   - Curl to test the routes were working
+- Started JWT Auth
+  - Wrote a function to validate the JWT, did not test it yet
+  - 

@@ -39,6 +39,7 @@ func main() {
 	}
 
 	go watcher.Watch(gatewayConfig, store)
+	go config.StartAuth()
 
 	err = api.HostApi(store)
 	if err != nil {

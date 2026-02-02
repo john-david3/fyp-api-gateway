@@ -51,3 +51,7 @@ test-routes:
 	curl "${HOST}/products"
 	curl "${HOST}/orders"
 	curl "${HOST}/protected"
+
+test-jwt:
+	@echo "testing jwt functionality"
+	curl -i "${HOST}/jwt"
