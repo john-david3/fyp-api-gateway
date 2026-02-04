@@ -29,6 +29,8 @@ func Watch(gatewayConfig *config.GatewayConfig, store *config.ConfigStore) {
 				if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) || event.Has(fsnotify.Remove) {
 					slog.Info("watcher detected modified file:", "file", event.Name)
 
+					// Perform Semantics Analysis
+
 					gatewayConfig, err = config.LoadAndValidateConfigFile(event.Name)
 					if err != nil {
 						slog.Error("error loading config", "error", err)

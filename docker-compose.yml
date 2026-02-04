@@ -4,6 +4,17 @@ networks:
   loki:
 
 services:
+  management-plane:
+    build:
+      context: .
+      dockerfile: management/Dockerfile
+    container_name: management-plane
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    networks:
+      - gateway_net
+
   data-plane:
     build:
       context: .
