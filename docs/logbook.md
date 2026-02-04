@@ -319,3 +319,14 @@ Requirement: Requests should be processed quickly
   - Used apache2-utils to create a password manager
   - GitHub Secrets
   - Curl to test the routes were working
+
+## 4th February
+- Semantics Analysis
+  - When user updates their config, show them how this what it will change
+  - diff?
+  - Warn of anything that may be poorly configured
+  - Apply changes safely, rollback?
+  - Correctness and understanding first
+- Step 1: User needs to be able to edit the config
+  - Management plane
+- Step 2: Old gateway config needs to be saved
