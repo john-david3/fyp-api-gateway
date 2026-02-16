@@ -22,7 +22,7 @@ unit-tests:
 
 docker-build:
 	@echo "Building Docker Files"
-	@${COMPOSE} build --no-cache
+	@${COMPOSE} build
 
 docker-run:
 	@echo "Running docker containers"

@@ -11,6 +11,8 @@ services:
     container_name: management-plane
     ports:
       - "80:80"
+    volumes:
+      - "./static/gateway.conf:/etc/config/gateway.conf"
     restart: unless-stopped
     networks:
       - gateway_net

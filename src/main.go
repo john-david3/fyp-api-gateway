@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"fyp-api-gateway/src/api"
 	"fyp-api-gateway/src/config"
+	"fyp-api-gateway/src/semantics"
 	"fyp-api-gateway/src/watcher"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -35,14 +36,21 @@ func main() {
 	gatewayConfig, err := config.RegisterConfigFile(store)
 	if err != nil {
 		slog.Error("Error reading config file", "error", err)
-		return
+		cancel()
 	}
 
 	go watcher.Watch(gatewayConfig, store)
 
-	err = api.HostApi(store)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/config/metadata/latest", store.CheckIsConfigUpdated)
+	mux.HandleFunc("/v1/config/latest", store.ServeConfig)
+	mux.HandleFunc("/analyse", semantics.RecvConfig)
+	mux.HandleFunc("/config/update", config.LoadNewConfig)
+	slog.Info("Control plane listening on port 10000")
+	err = http.ListenAndServe(":10000", mux)
 	if err != nil {
-		slog.Error("Error creating api", "error", err)
+		slog.Error("Error starting server", "error", err)
 		cancel()
 	}
+
 }

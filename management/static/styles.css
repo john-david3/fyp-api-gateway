@@ -1,0 +1,38 @@
+body {
+    font-family: sans-serif;
+    margin: 2rem;
+}
+
+textarea {
+    width: 100%;
+    height: 60vh;
+    font-family: monospace;
+    font-size: 14px;
+}
+
+button {
+    margin-top: 1rem;
+}
+
+#findings {
+    margin-top: 2rem;
+    padding: 1rem;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+}
+
+#findings h3 {
+    margin: 0.5rem 0 0.2rem;
+}
+
+#findings ul {
+    margin: 0 0 1rem 1.5rem;
+}
+
+#findings li.error {
+    color: red;
+}
+
+#findings li.warning {
+    color: orange;
+}

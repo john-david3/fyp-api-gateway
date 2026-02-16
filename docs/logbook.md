@@ -329,4 +329,34 @@ Requirement: Requests should be processed quickly
   - Correctness and understanding first
 - Step 1: User needs to be able to edit the config
   - Management plane
-- Step 2: Old gateway config needs to be saved
+- Created a simple management plane that shows the user their config file and allows them to edit it
+
+## 7th February
+- Started on the semantics analysis
+  - Management plane now contains no logic
+    - Only responsibility is accepting the config and passing it to the control plane for analysis
+    - Control plane reads the config and validates it with a simple rule so far
+
+## 9th February
+- Current Goal: Semantics analysis - think of appropriate rules
+- Removed api.go: hosting routes now done in main.go
+- Created the skeleton code for doing the semantics analysis
+  - Two types: Error checking & Update explanation
+
+## 10th February
+- Created rules for semantics analysis
+
+## 11th February
+- Sent findings from control plane to management plane
+
+## 15th/16th February
+- Finished with the semantics analysis
+  - Added checks for new routes
+- Frontend allows the user to edit their config
+- When the user submits their changes, semantics analysis happens
+  - TODO: does not yet allow you to remove routes
+- If the user has no errors and is happy with the explanation of their changes they hit "accept"
+- The gateway config is then updated and the watcher notices and begins the update NGINX process
+- Uses a lot of cross container communicates which could be a security problem
+- Semantics analysis done on the control plane
+- Management Plane used for displaying the config to the user
