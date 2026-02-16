@@ -32,7 +32,7 @@ func RecvConfig(w http.ResponseWriter, r *http.Request) {
 	var cfg config.GatewayConfig
 
 	if err := yaml.NewDecoder(r.Body).Decode(&cfg); err != nil {
-		slog.Error("Error decoding config", err)
+		slog.Error("Error decoding config", "error", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -59,13 +59,13 @@ func RecvConfig(w http.ResponseWriter, r *http.Request) {
 func Analyse(cfg config.GatewayConfig) ([]byte, error) {
 	oldConfFile, err := os.OpenFile(oldConfPath, 0, 0644)
 	if err != nil {
-		slog.Error("Error opening old config file", err)
+		slog.Error("Error opening old config file", "error", err)
 		return nil, err
 	}
 
 	var oldConf config.GatewayConfig
 	if err = yaml.NewDecoder(oldConfFile).Decode(&oldConf); err != nil {
-		slog.Error("Error decoding config", err)
+		slog.Error("Error decoding config", "error", err)
 		return nil, err
 	}
 
@@ -79,7 +79,7 @@ func Analyse(cfg config.GatewayConfig) ([]byte, error) {
 	findingsMap["updates"] = foundUpdates
 	findings, err := json.Marshal(findingsMap)
 	if err != nil {
-		slog.Error("Error marshalling findings map", err)
+		slog.Error("Error marshalling findings map", "error", err)
 		return nil, err
 	}
 
