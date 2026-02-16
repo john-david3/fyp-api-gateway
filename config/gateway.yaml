@@ -23,7 +23,7 @@ connections:
           zone: 10
           rate: 5
         auth: false
-          
+
       - path: /protected
         upstream:
           name: protected_service

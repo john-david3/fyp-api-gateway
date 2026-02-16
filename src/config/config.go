@@ -7,14 +7,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sync"
 	"text/template"
 	"time"
 
 	"gopkg.in/yaml.v3"
+)
+
+var (
+	pendingConfig string
+	pendingMu     sync.Mutex
 )
 
 type ConfigStore struct {
@@ -31,6 +38,7 @@ func NewConfigStore() *ConfigStore {
 	}
 }
 
+/*	Update the nginxConfig */
 func (s *ConfigStore) UpdateConfig(nginxConfig string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -55,6 +63,7 @@ func (s *ConfigStore) UpdateConfig(nginxConfig string) {
 
 }
 
+/* Check the timestamp of the latest config update */
 func (s *ConfigStore) CheckIsConfigUpdated(w http.ResponseWriter, _ *http.Request) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -178,3 +187,74 @@ func LoadAndValidateConfigFile(filepath string) (*GatewayConfig, error) {
 
 	return &config, nil
 }
+
+func LoadNewConfig(w http.ResponseWriter, r *http.Request) {
+	slog.Info("loading new gateway config file")
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Read raw YAML body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		slog.Error("failed to read request body", "error", err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	defer func() {
+		err = r.Body.Close()
+		if err != nil {
+			slog.Error("failed to close request body", "error", err)
+		}
+	}()
+
+	if len(body) == 0 {
+		http.Error(w, "empty config body", http.StatusBadRequest)
+		return
+	}
+
+	gatewayPath := "/etc/config/gateway.yaml"
+	dir := filepath.Dir(gatewayPath)
+
+	if err = os.MkdirAll(dir, 0755); err != nil {
+		slog.Error("failed creating config directory", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Write using atomic replacement
+	tempFile, err := os.CreateTemp(dir, "gateway-*.yaml")
+	if err != nil {
+		slog.Error("failed creating temp file", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	defer os.Remove(tempFile.Name())
+
+	if _, err := tempFile.Write(body); err != nil {
+		slog.Error("failed writing temp config", "error", err)
+		tempFile.Close()
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tempFile.Close(); err != nil {
+		slog.Error("failed closing temp file", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Atomic replace
+	if err := os.Rename(tempFile.Name(), gatewayPath); err != nil {
+		slog.Error("failed replacing config file", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	slog.Info("gateway config updated successfully", "path", gatewayPath)
+
+	w.WriteHeader(http.StatusOK)
+}
+
