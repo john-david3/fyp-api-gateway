@@ -3,6 +3,9 @@ networks:
     driver: bridge
   loki:
 
+volumes:
+  postgres-data:
+
 services:
   management-plane:
     build:
@@ -55,7 +58,24 @@ services:
     volumes:
       - "./config:/etc/config"
       - "./src/templates/nginx.conf.tmpl:/etc/nginx/nginx.conf.tmpl:ro"
+      - "./src/db/init.sql:/var/lib/init.sql:ro"
     restart: unless-stopped
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    networks:
+      - gateway_net
+
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASS}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql
     networks:
       - gateway_net
 

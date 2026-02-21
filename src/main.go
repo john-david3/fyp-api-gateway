@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fyp-api-gateway/src/config"
+	database "fyp-api-gateway/src/db"
 	"fyp-api-gateway/src/semantics"
 	"fyp-api-gateway/src/watcher"
 	"log/slog"
@@ -40,6 +41,21 @@ func main() {
 	}
 
 	go watcher.Watch(gatewayConfig, store)
+
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		slog.Error("Error reading database connection", "error", "DATABASE_URL is not set")
+	}
+
+	db, err := database.NewDatabase(dsn)
+	if err != nil {
+		slog.Error("Error initialising database", "error", err)
+	}
+	defer db.Close()
+
+	if err := database.StartDB(db); err != nil {
+		slog.Error("Error running migration script", "error", err)
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/config/metadata/latest", store.CheckIsConfigUpdated)

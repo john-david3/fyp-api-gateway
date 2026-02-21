@@ -360,3 +360,31 @@ Requirement: Requests should be processed quickly
 - Uses a lot of cross container communicates which could be a security problem
 - Semantics analysis done on the control plane
 - Management Plane used for displaying the config to the user
+
+## 16th February
+- Started making the app scalable
+- Ideas
+  - Need to add a login to the management plane
+  - Need to store information per user instead of a single config
+  - Firebase?
+  - Store information somewhere else
+
+## 18th February
+Checklist for allowing multiple users
+
+### Phase 1 - Introduce Users & Persistence
+-[x] Add a Database - 21/02
+-[x] Create Tables - 21/02
+-[ ] Implement Authentication
+
+### Phase 2 - Scope Users by Config
+-[ ] Modify Config Endpoints
+
+### Phase 3 - Per-User NGINX Files
+-[ ] Create User Config Directory
+-[ ] Update Config Generator
+-[ ] Atomic Writes File
+-[ ] Serialize Reloads
+
+### Phase 4 - Concurrency Protection
+-[ ] Add optimistic Locking
