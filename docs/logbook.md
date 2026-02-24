@@ -375,7 +375,7 @@ Checklist for allowing multiple users
 ### Phase 1 - Introduce Users & Persistence
 -[x] Add a Database - 21/02
 -[x] Create Tables - 21/02
--[ ] Implement Authentication
+-[x] Implement Authentication - 23/02
 
 ### Phase 2 - Scope Users by Config
 -[ ] Modify Config Endpoints
@@ -388,3 +388,9 @@ Checklist for allowing multiple users
 
 ### Phase 4 - Concurrency Protection
 -[ ] Add optimistic Locking
+
+## 21st February
+Issues
+-[x] Config.html is not showing the gateway.yaml 24/02
+-[x] 401 unauthorised when trying to validate user 22/02
+-[x] STATE 23/02

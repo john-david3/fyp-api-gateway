@@ -50,18 +50,25 @@ func main() {
 	db, err := database.NewDatabase(dsn)
 	if err != nil {
 		slog.Error("Error initialising database", "error", err)
+		return
 	}
-	defer db.Close()
+	defer db.Conn.Close()
 
-	if err := database.StartDB(db); err != nil {
+	if err = db.StartDB("/var/lib/init.sql"); err != nil {
 		slog.Error("Error running migration script", "error", err)
+		return
 	}
+	slog.Info("Initialised database")
+
+	server := &database.Server{DB: db}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/config/metadata/latest", store.CheckIsConfigUpdated)
 	mux.HandleFunc("/v1/config/latest", store.ServeConfig)
 	mux.HandleFunc("/analyse", semantics.RecvConfig)
 	mux.HandleFunc("/config/update", config.LoadNewConfig)
+	mux.HandleFunc("/verify-login", server.VerifyLoginInfo)
+	mux.HandleFunc("/validate-session", server.ValidateSession)
 	slog.Info("Control plane listening on port 10000")
 	err = http.ListenAndServe(":10000", mux)
 	if err != nil {

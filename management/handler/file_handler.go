@@ -80,7 +80,6 @@ func HandleAcceptChanges(w http.ResponseWriter, r *http.Request) {
 		"application/x-yaml",
 		bytes.NewBuffer([]byte(configRequest.Content)),
 	)
-
 }
 
 func submitConfig(cfg []byte) (*http.Response, error) {
@@ -89,4 +88,8 @@ func submitConfig(cfg []byte) (*http.Response, error) {
 		"application/x-yaml",
 		bytes.NewBuffer(cfg),
 	)
+}
+
+func GetGateway(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./static/gateway.yaml")
 }
