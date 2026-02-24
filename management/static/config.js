@@ -4,9 +4,8 @@ const uploadBtn = document.getElementById("saveBtn");
 const SAVE_URL = "http://localhost:80/file/upload";
 const FINDINGS_URL = "http://localhost:80/file/retrieve";
 const ACCEPT_URL = "http://localhost:80/file/accept";
-const FILE_URL = "gateway.yaml";
+const FILE_URL = "http://localhost:80/file/gateway";
 
-// Load initial config into editor
 window.addEventListener("DOMContentLoaded", async () => {
     try {
         const response = await fetch(FILE_URL);
@@ -18,7 +17,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-// Upload button logic
 uploadBtn.addEventListener("click", async () => {
     const content = editor.value;
 
