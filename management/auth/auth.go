@@ -3,7 +3,6 @@ package auth
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -82,8 +81,6 @@ func RequireSession(next http.HandlerFunc) http.HandlerFunc {
 			http.Redirect(w, r, "/auth", http.StatusSeeOther)
 			return
 		}
-
-		fmt.Println(cookie)
 
 		req, _ := http.NewRequest(
 			"GET",

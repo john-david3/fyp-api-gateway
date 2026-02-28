@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -172,7 +171,6 @@ func (s *Server) createSession(name string) (string, error) {
 func (s *Server) ValidateSession(w http.ResponseWriter, r *http.Request) {
 	slog.Info("validating user session")
 	sessionId := r.Header.Get("X-Session-ID")
-	fmt.Println(sessionId)
 
 	var username string
 	err := s.DB.Conn.QueryRow(
@@ -187,4 +185,104 @@ func (s *Server) ValidateSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Server) UserConfig(w http.ResponseWriter, r *http.Request) {
+	slog.Info("received request for user config")
+
+	cookie, err := r.Cookie("session")
+	if err != nil {
+		slog.Error("failed getting session id", "error", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	sessionId := cookie.Value
+
+	var gatewayCfg string
+	err = s.DB.Conn.QueryRow(`
+		SELECT u.config_yaml
+		FROM users AS u 
+		JOIN sessions AS s ON u.username = s.username 
+		WHERE s.id = $1 AND s.expires > NOW()`,
+		sessionId).Scan(&gatewayCfg)
+
+	if err != nil {
+		slog.Error("error querying session", "error", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/yaml")
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write([]byte(gatewayCfg))
+	if err != nil {
+		slog.Error("error writing response", "error", err)
+		return
+	}
+}
+
+func RetrieveUserBySessionId(sessionId string) string {
+	dsn := os.Getenv("DATABASE_URL")
+
+	db, err := sql.Open("pgx", dsn)
+	if err != nil {
+		slog.Error("error opening database connection:", "error", err)
+		return ""
+	}
+
+	var username string
+	err = db.QueryRow(`
+		SELECT username
+		FROM sessions
+		WHERE id = $1`,
+		sessionId).Scan(&username)
+
+	return username
+}
+
+func RetrieveUserConfig(username string) string {
+	dsn := os.Getenv("DATABASE_URL")
+
+	db, err := sql.Open("pgx", dsn)
+	if err != nil {
+		slog.Error("error opening database connection:", "error", err)
+		return ""
+	}
+
+	var gatewayCfg string
+	err = db.QueryRow(`
+		SELECT config_yaml
+		FROM users 
+		WHERE username = $1`,
+		username,
+	).Scan(&gatewayCfg)
+
+	return gatewayCfg
+}
+
+func InsertNewConfig(sessionId, gatewayCfg string) error {
+	dsn := os.Getenv("DATABASE_URL")
+
+	db, err := sql.Open("pgx", dsn)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		UPDATE users AS u
+		SET config_yaml = $1
+		FROM sessions AS s
+		WHERE s.id = $2
+		AND s.expires > NOW()
+		AND u.username = s.username`,
+		gatewayCfg, sessionId,
+	)
+	slog.Info("inserted new config to database")
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
