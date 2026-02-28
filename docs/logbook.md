@@ -378,7 +378,7 @@ Checklist for allowing multiple users
 -[x] Implement Authentication - 23/02
 
 ### Phase 2 - Scope Users by Config
--[ ] Modify Config Endpoints
+-[x] Modify Config Endpoints - 28/02
 
 ### Phase 3 - Per-User NGINX Files
 -[ ] Create User Config Directory
@@ -394,3 +394,20 @@ Issues
 -[x] Config.html is not showing the gateway.yaml 24/02
 -[x] 401 unauthorised when trying to validate user 22/02
 -[x] STATE 23/02
+
+## 24th February
+- Instead of serving the config from a static location, the database should be contacted
+- See if any of the routes relating directly to the config are in need of changing?
+- What works:
+  - Management plane now displays the config by loading it from the postgres database
+- What is there still to do?
+  -[x] Edit the core functions e.g. updating the config file 28/02
+  -[x] Load actual configs from the database, not just "test" 28/02
+
+## 25th February
+-[x] In HandleNewConfig, content does not exist 28/02
+
+## 27th February
+- https://gateway.example.com/<user-id>/auth → Auth Service
+- https://gateway.example.com/<user-id>/content → Content Service
+- https://gateway.example.com/<user-id>/analytics → Analytics Service

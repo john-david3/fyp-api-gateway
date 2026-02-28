@@ -63,12 +63,20 @@ func main() {
 	server := &database.Server{DB: db}
 
 	mux := http.NewServeMux()
+
+	// watcher routes
 	mux.HandleFunc("/v1/config/metadata/latest", store.CheckIsConfigUpdated)
 	mux.HandleFunc("/v1/config/latest", store.ServeConfig)
+
+	// config handler routes
 	mux.HandleFunc("/analyse", semantics.RecvConfig)
 	mux.HandleFunc("/config/update", config.LoadNewConfig)
+
+	// database routes
 	mux.HandleFunc("/verify-login", server.VerifyLoginInfo)
 	mux.HandleFunc("/validate-session", server.ValidateSession)
+	mux.HandleFunc("/api/gateway", server.UserConfig)
+
 	slog.Info("Control plane listening on port 10000")
 	err = http.ListenAndServe(":10000", mux)
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	database "fyp-api-gateway/src/db"
 	"io"
 	"log/slog"
 	"net/http"
@@ -19,27 +20,26 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var (
-	pendingConfig string
-	pendingMu     sync.Mutex
-)
-
-type ConfigStore struct {
+type ConfStore struct {
 	mu      sync.RWMutex
 	latest  string
 	configs map[string]ConfigPayload
 	meta    map[string]ConfigMetadata
 }
 
-func NewConfigStore() *ConfigStore {
-	return &ConfigStore{
+type ConfRequest struct {
+	Content string `json:"content"`
+}
+
+func NewConfigStore() *ConfStore {
+	return &ConfStore{
 		configs: make(map[string]ConfigPayload),
 		meta:    make(map[string]ConfigMetadata),
 	}
 }
 
 /*	Update the nginxConfig */
-func (s *ConfigStore) UpdateConfig(nginxConfig string) {
+func (s *ConfStore) UpdateConfig(nginxConfig string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -64,7 +64,7 @@ func (s *ConfigStore) UpdateConfig(nginxConfig string) {
 }
 
 /* Check the timestamp of the latest config update */
-func (s *ConfigStore) CheckIsConfigUpdated(w http.ResponseWriter, _ *http.Request) {
+func (s *ConfStore) CheckIsConfigUpdated(w http.ResponseWriter, _ *http.Request) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -78,7 +78,7 @@ func (s *ConfigStore) CheckIsConfigUpdated(w http.ResponseWriter, _ *http.Reques
 
 }
 
-func (s *ConfigStore) ServeConfig(w http.ResponseWriter, r *http.Request) {
+func (s *ConfStore) ServeConfig(w http.ResponseWriter, r *http.Request) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -97,7 +97,7 @@ func (s *ConfigStore) ServeConfig(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func RegisterConfigFile(store *ConfigStore) (*GatewayConfig, error) {
+func RegisterConfigFile(store *ConfStore) (*GatewayConfig, error) {
 	// Check if the file exists
 	configFile, err := checkFileExists(GatewayConfigDirName + GatewayConfigFileName)
 	if err != nil {
@@ -120,7 +120,7 @@ func RegisterConfigFile(store *ConfigStore) (*GatewayConfig, error) {
 	return config, nil
 }
 
-func UpdateNginxConfig(filepath, user string, gatewayConfig *GatewayConfig, store *ConfigStore) error {
+func UpdateNginxConfig(filepath, user string, gatewayConfig *GatewayConfig, store *ConfStore) error {
 	// TODO: Make a defaults page so tests can overwrite
 
 	// Check if NGINX config exists
@@ -192,11 +192,18 @@ func LoadNewConfig(w http.ResponseWriter, r *http.Request) {
 	slog.Info("loading new gateway config file")
 
 	if r.Method != http.MethodPost {
+		slog.Error("invalid method", "method", r.Method)
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Read raw YAML body
+	cookie, err := r.Cookie("session")
+	if err != nil {
+		slog.Error("session cookie not found in request", "error", err)
+		http.Error(w, "cookie not found in request", http.StatusUnauthorized)
+		return
+	}
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		slog.Error("failed to read request body", "error", err)
@@ -207,13 +214,26 @@ func LoadNewConfig(w http.ResponseWriter, r *http.Request) {
 		err = r.Body.Close()
 		if err != nil {
 			slog.Error("failed to close request body", "error", err)
+			http.Error(w, "failed to close request body", http.StatusInternalServerError)
+			return
 		}
 	}()
 
-	if len(body) == 0 {
-		http.Error(w, "empty config body", http.StatusBadRequest)
+	var req ConfRequest
+	if err = json.Unmarshal(body, &req); err != nil {
+		slog.Error("failed to unmarshal request", "error", err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
+
+	err = database.InsertNewConfig(cookie.Value, req.Content)
+	if err != nil {
+		slog.Error("failed to insert new config", "error", err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// TODO: Per user config instead of hard coded writes
 
 	gatewayPath := "/etc/config/gateway.yaml"
 	dir := filepath.Dir(gatewayPath)
@@ -257,4 +277,3 @@ func LoadNewConfig(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
-

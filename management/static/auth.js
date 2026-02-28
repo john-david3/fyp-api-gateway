@@ -10,8 +10,6 @@ async function sendLoginData(name, password) {
             throw new Error("Request failed with status " + response.status);
         }
 
-        const result = await response.json();
-        console.log("Server response:", result);
     } catch (error) {
         console.error("Error sending login data:", error);
     }

@@ -1,19 +1,22 @@
 const editor = document.getElementById("editor");
 const uploadBtn = document.getElementById("saveBtn");
 
+const FILE_URL = "http://localhost:80/file/gateway";
 const SAVE_URL = "http://localhost:80/file/upload";
 const FINDINGS_URL = "http://localhost:80/file/retrieve";
 const ACCEPT_URL = "http://localhost:80/file/accept";
-const FILE_URL = "http://localhost:80/file/gateway";
 
 window.addEventListener("DOMContentLoaded", async () => {
     try {
+        // retrieve the users config file from the database
         const response = await fetch(FILE_URL);
+
         if (!response.ok) throw new Error(`Failed to load ${FILE_URL}: ${response.statusText}`);
         const text = await response.text();
         editor.value = text;
     } catch (err) {
         editor.value = `Error loading ${FILE_URL}:\n${err.message}`;
+        console.log("Error loading Gateway Config file");
     }
 });
 
@@ -25,7 +28,7 @@ uploadBtn.addEventListener("click", async () => {
         const response = await fetch(SAVE_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ filename: "gateway.yaml", content })
+            body: JSON.stringify({ content: content })
         });
 
         if (!response.ok) throw new Error(`Save failed: ${response.statusText}`);
@@ -45,7 +48,6 @@ uploadBtn.addEventListener("click", async () => {
     }
 });
 
-// Poll /file/findings until backend produces results
 async function pollFindings(retries = 10, delayMs = 500) {
     for (let i = 0; i < retries; i++) {
         try {
@@ -61,7 +63,7 @@ async function pollFindings(retries = 10, delayMs = 500) {
         }
         await new Promise(r => setTimeout(r, delayMs));
     }
-    return null; // nothing after retries
+    return null;
 }
 
 // Display findings in the DOM
@@ -110,12 +112,15 @@ function displayFindings(findings) {
             const content = editor.value;
 
             try {
+                console.log(content);
                 const response = await fetch(ACCEPT_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ filename: "gateway.yaml", content })
+                    body: JSON.stringify({ content: content })
                 });
-                if (!response.ok) throw new Error("Accept failed");
+                if (!response.ok) {
+                    throw new Error("Accept failed");
+                }
                 alert("Configuration applied successfully!");
                 acceptBtn.remove();
             } catch (err) {

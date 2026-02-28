@@ -9,7 +9,7 @@ import (
 
 // TODO: Write unit tests for this
 
-func Watch(gatewayConfig *config.GatewayConfig, store *config.ConfigStore) {
+func Watch(gatewayConfig *config.GatewayConfig, store *config.ConfStore) {
 	slog.Info("Starting file watcher")
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
