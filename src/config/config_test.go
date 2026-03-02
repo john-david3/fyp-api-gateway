@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fyp-api-gateway/src/utils"
 	"os"
 	"path/filepath"
 
@@ -11,14 +12,14 @@ import (
 )
 
 func TestRegisterConfigFile(t *testing.T) {
-	GatewayConfigDirName = "../../test/configs/gateway/"
+	utils.GatewayConfigDirName = "../../test/configs/gateway/"
 
-	filePath := filepath.Join(GatewayConfigDirName, GatewayConfigFileName)
+	filePath := filepath.Join(utils.GatewayConfigDirName, utils.GatewayConfigFileName)
 	_, err := os.Stat(filePath)
 	require.NoError(t, err)
 
-	NGINXTemplateDirName = "../templates/"
-	NGINXDirName = "../../test/configs/nginx/"
+	utils.NGINXTemplateDirName = "../templates/"
+	utils.NGINXDirName = "../../test/configs/nginx/"
 	store := NewConfigStore()
 	gatewayConfig, err := RegisterConfigFile(store)
 	require.NoError(t, err)
@@ -31,11 +32,11 @@ func TestUpdateNginxConfig(t *testing.T) {
 	cfg := createDummyGatewayConfig()
 	store := NewConfigStore()
 
-	err := UpdateNginxConfig(NGINXDirName+NGINXConfigFileName, "", cfg, store)
+	err := UpdateNginxConfig(utils.NGINXDirName+utils.NGINXConfigFileName, "", cfg, store)
 	require.NoError(t, err)
 
 	// read the new file
-	file, err := os.ReadFile(NGINXDirName + NGINXConfigFileName)
+	file, err := os.ReadFile(utils.NGINXDirName + utils.NGINXConfigFileName)
 	require.NoError(t, err)
 	expectedFile, err := os.ReadFile("../../test/configs/nginx/nginx.conf")
 	require.NoError(t, err)

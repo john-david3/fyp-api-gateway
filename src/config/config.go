@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	database "fyp-api-gateway/src/db"
+	"fyp-api-gateway/src/utils"
 	"io"
 	"log/slog"
 	"net/http"
@@ -99,7 +100,7 @@ func (s *ConfStore) ServeConfig(w http.ResponseWriter, r *http.Request) {
 
 func RegisterConfigFile(store *ConfStore) (*GatewayConfig, error) {
 	// Check if the file exists
-	configFile, err := checkFileExists(GatewayConfigDirName + GatewayConfigFileName)
+	configFile, err := checkFileExists(utils.GatewayConfigDirName + utils.GatewayConfigFileName)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +149,7 @@ Uses templates to load the config back into `/etc/nginx`. Called by `UpdateNginx
 */
 func renderNginxTemplate(gatewayCfg *GatewayConfig) (string, error) {
 	// load the template file
-	tmpl, err := template.ParseFiles(NGINXTemplateDirName + NGINXTemplateFileName)
+	tmpl, err := template.ParseFiles(utils.NGINXTemplateDirName + utils.NGINXTemplateFileName)
 	if err != nil {
 		return "", err
 	}

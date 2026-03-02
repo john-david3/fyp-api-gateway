@@ -411,3 +411,9 @@ Issues
 - https://gateway.example.com/<user-id>/auth → Auth Service
 - https://gateway.example.com/<user-id>/content → Content Service
 - https://gateway.example.com/<user-id>/analytics → Analytics Service
+
+## 28th February
+- Merged phase 2 of scaling
+
+## 2th March
+- Starting the final phase of implementation

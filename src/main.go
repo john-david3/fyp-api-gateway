@@ -73,6 +73,7 @@ func main() {
 	mux.HandleFunc("/config/update", config.LoadNewConfig)
 
 	// database routes
+	mux.HandleFunc("/verify-signup", server.Signup)
 	mux.HandleFunc("/verify-login", server.VerifyLoginInfo)
 	mux.HandleFunc("/validate-session", server.ValidateSession)
 	mux.HandleFunc("/api/gateway", server.UserConfig)
