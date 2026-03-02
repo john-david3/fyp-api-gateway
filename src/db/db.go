@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"fyp-api-gateway/src/utils"
 	"log/slog"
 	"net/http"
 	"os"
@@ -63,6 +65,52 @@ func (d *Database) StartDB(path string) error {
 	return nil
 }
 
+func (s *Server) Signup(w http.ResponseWriter, r *http.Request) {
+	slog.Info("attempting to sign up new user...")
+	loginInfo := &LoginInfo{}
+
+	if r.Method != http.MethodPost {
+		slog.Error("invalid method", "method", r.Method)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&loginInfo); err != nil {
+		slog.Error("error decoding loginInfo", "error", err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	var id string
+	err := s.DB.Conn.QueryRow(
+		"SELECT id FROM users WHERE username = $1",
+		loginInfo.Name,
+	).Scan(&id)
+
+	if err == nil || id != "" {
+		slog.Error("error querying user", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// TODO: Store password hash
+	fmt.Println(loginInfo.Name)
+	_, err = s.DB.Conn.Exec(`
+		INSERT INTO users (username, password, config_yaml)
+		VALUES ($1, $2, $3);`,
+		loginInfo.Name, loginInfo.Password, utils.DefaultConfigContent,
+	)
+
+	if err != nil {
+		slog.Error("error inserting user", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 /*
 Receive the login info from the management plane and decode it
 Check the password used is the same as the one in the database, also check the username is there
@@ -94,12 +142,6 @@ func (s *Server) VerifyLoginInfo(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, sql.ErrNoRows) {
 		slog.Error("user not found", "username", loginInfo.Name)
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
-		return
-	}
-
-	if err != nil {
-		slog.Error("error querying database", "error", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 

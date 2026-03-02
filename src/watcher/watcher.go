@@ -2,6 +2,7 @@ package watcher
 
 import (
 	"fyp-api-gateway/src/config"
+	"fyp-api-gateway/src/utils"
 	"log/slog"
 
 	"github.com/fsnotify/fsnotify"
@@ -48,7 +49,7 @@ func Watch(gatewayConfig *config.GatewayConfig, store *config.ConfStore) {
 		}
 	}()
 
-	err = watcher.Add(config.WatcherDirName)
+	err = watcher.Add(utils.WatcherDirName)
 	if err != nil {
 		slog.Error("error adding watcher:", "error", err)
 	}

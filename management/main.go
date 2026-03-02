@@ -26,6 +26,7 @@ func main() {
 	})
 
 	// account initialisation routes
+	mux.HandleFunc("/api/signup", auth.Signup)
 	mux.HandleFunc("/api/login", auth.Login)
 	mux.HandleFunc("/file/gateway", auth.RequireSession(handler.Gateway))
 

@@ -1,6 +1,6 @@
-async function sendLoginData(name, password) {
+async function sendLoginData(name, password, url) {
     try {
-        const response = await fetch("http://localhost:80/api/login", {
+        const response = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name: name, password: password })
@@ -21,5 +21,14 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
     const name = document.getElementById("name").value;
     const password = document.getElementById("password").value;
 
-    sendLoginData(name, password);
+    sendLoginData(name, password, "http://localhost:80/api/login");
+});
+
+document.getElementById("signupForm").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    const name = document.getElementById("signupName").value;
+    const password = document.getElementById("signupPassword").value;
+
+    sendLoginData(name, password, "http://localhost:80/api/signup");
 });

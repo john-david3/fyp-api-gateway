@@ -3,24 +3,25 @@ package auth
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
 )
 
-type LoginInfo struct {
+type UserInfo struct {
 	Name     string `json:"name"`
 	Password string `json:"password"`
 }
 
 /*
 Receive the login details from auth.js
-Decode them and format them as `LoginInfo` to send to the control plane
+Decode them and format them as `UserInfo` to send to the control plane
 Control plane validates the user is in the database and returns a cookie
 */
 func Login(w http.ResponseWriter, r *http.Request) {
 	slog.Info("received login request")
-	loginInfo := LoginInfo{}
+	loginInfo := UserInfo{}
 
 	if r.Method != "POST" {
 		slog.Error("method not allowed", "method", r.Method)
@@ -68,6 +69,44 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		Expires:  time.Now().Add(24 * time.Hour),
 	})
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func Signup(w http.ResponseWriter, r *http.Request) {
+	slog.Info("received signup request")
+	loginInfo := UserInfo{}
+
+	if r.Method != "POST" {
+		slog.Error("method not allowed", "method", r.Method)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
+	fmt.Println(r.Body)
+	err := json.NewDecoder(r.Body).Decode(&loginInfo)
+	if err != nil {
+		slog.Error("error decoding signup info", "error", err)
+		return
+	}
+
+	body, err := json.Marshal(loginInfo)
+	if err != nil {
+		slog.Error("error encoding signup info", "error", err)
+		return
+	}
+
+	res, err := http.Post(
+		"http://control-plane:10000/verify-signup",
+		"application/json",
+		bytes.NewBuffer(body),
+	)
+
+	if res.StatusCode != http.StatusOK {
+		slog.Error("error verifying signup", "error", res.Status)
+	} else {
+		slog.Info("verified signup")
+	}
 
 	w.WriteHeader(http.StatusOK)
 }
