@@ -381,8 +381,8 @@ Checklist for allowing multiple users
 -[x] Modify Config Endpoints - 28/02
 
 ### Phase 3 - Per-User NGINX Files
--[ ] Create User Config Directory
--[ ] Update Config Generator
+-[x] Create User Config Directory 02/03
+-[x] Update Config Generator 02/03
 -[ ] Atomic Writes File
 -[ ] Serialize Reloads
 
@@ -415,5 +415,13 @@ Issues
 ## 28th February
 - Merged phase 2 of scaling
 
-## 2th March
-- Starting the final phase of implementation
+## 2nd March
+- Created signup on the management, logic handled in control plane
+- Updated the way NGINX configs are loaded, now done as soon as a user signs up
+  - Initially uses a default config
+- Began to modify the watcher to detect config changes, if change is detected it should notify the data plane
+
+## 3rd March
+- Watcher looks at correct directory
+- Per-User Config should be working
+- Problem: watched directory is not exist

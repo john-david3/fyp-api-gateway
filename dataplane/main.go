@@ -1,112 +1,71 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
-	"fyp-api-gateway/src/config"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
-	"time"
+	"path/filepath"
 )
 
-const (
-	controlPlaneURL = "http://control-plane:10000"
-	NginxDirectory  = "/etc/nginx/"
-	NginxFile       = "nginx.conf"
-)
+type Response struct {
+	Filename string `json:"filename"`
+	Body     []byte `json:"body"`
+}
 
 func main() {
-	var checksum string
-	ctx, _ := context.WithCancel(context.Background())
+	mux := http.NewServeMux()
 
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
-
-	slog.Info("Started polling for new NGINX config")
-	for {
-		select {
-		case <-ctx.Done():
-			return
-
-		case <-ticker.C:
-			meta, err := fetchMetadata()
-			if err != nil {
-				slog.Error("failed to fetch metadata", "error", err)
-				continue
-			}
-
-			if meta.Checksum == checksum {
-				continue
-			}
-
-			slog.Info("new config detected", "version", meta.Version)
-
-			cfg, err := fetchConfig(meta.Version)
-			if err != nil {
-				slog.Error("failed to fetch configuration", "error", err)
-				continue
-			}
-
-			if err := applyNginxConfig(cfg); err != nil {
-				slog.Error("failed to apply nginx configuration", "error", err)
-				continue
-			}
-
-			checksum = meta.Checksum
-		}
+	mux.HandleFunc("/api/handle-config", handleNewConfig)
+	err := http.ListenAndServe(":1000", mux)
+	if err != nil {
+		slog.Error("Error starting HTTP server", "error", err)
 	}
-
 }
 
-func fetchMetadata() (*config.ConfigMetadata, error) {
-	resp, err := http.Get(controlPlaneURL + "/v1/config/metadata/latest")
+func handleNewConfig(w http.ResponseWriter, r *http.Request) {
+	slog.Info("handling config update")
+	res := &Response{}
+
+	if r.Method != "POST" {
+		slog.Error("Invalid request method", "method", r.Method)
+		return
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&res)
 	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, err
+		slog.Error("Error unmarshalling request body", "error", err)
+		return
 	}
 
-	var metadata config.ConfigMetadata
-	if err := json.NewDecoder(resp.Body).Decode(&metadata); err != nil {
-		return nil, err
+	dir := filepath.Dir(res.Filename)
+	err = os.MkdirAll(dir, 0644)
+	if err != nil {
+		slog.Error("Error creating directory", "error", err)
+		return
 	}
 
-	return &metadata, nil
+	file, err := os.Create(res.Filename)
+	if err != nil {
+		slog.Error("Error creating file", "filename", res.Filename)
+		return
+	}
+
+	_, err = file.Write(res.Body)
+	if err != nil {
+		slog.Error("Error writing to file", "filename", res.Filename)
+		return
+	}
+
+	err = applyNginxConfig()
+	if err != nil {
+		slog.Error("Error applying nginx config", "filename", res.Filename)
+		return
+	}
 }
 
-func fetchConfig(version string) (string, error) {
-	resp, err := http.Get(controlPlaneURL + "/v1/config/latest")
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status code: %s", resp.Status)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	return string(body), nil
-}
-
-func applyNginxConfig(cfg string) error {
-	const path = NginxDirectory + NginxFile
-
-	if err := os.WriteFile(path, []byte(cfg), 0644); err != nil {
-		return err
-	}
-
+func applyNginxConfig() error {
 	if err := exec.Command("nginx", "-t").Run(); err != nil {
 		return err
 	}

@@ -58,7 +58,7 @@ services:
     volumes:
       - "./config:/etc/config"
       - "./src/templates/nginx.conf.tmpl:/etc/nginx/nginx.conf.tmpl:ro"
-      - "./src/db/init.sql:/var/lib/init.sql:ro"
+      - "./src/config/init.sql:/var/lib/init.sql:ro"
     restart: unless-stopped
     depends_on:
       - postgres
