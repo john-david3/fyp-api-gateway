@@ -1,15 +1,18 @@
 package watcher
 
 import (
-	"fyp-api-gateway/src/config"
+	"bytes"
+	"encoding/json"
+	"fyp-api-gateway/src/utils"
 	"log/slog"
+	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/fsnotify/fsnotify"
 )
 
-// TODO: Write unit tests for this
-
-func Watch(gatewayConfig *config.GatewayConfig, store *config.ConfigStore) {
+func Watch() {
 	slog.Info("Starting file watcher")
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -26,17 +29,29 @@ func Watch(gatewayConfig *config.GatewayConfig, store *config.ConfigStore) {
 					return
 				}
 				slog.Info("watcher event:", "event", event)
-				if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) || event.Has(fsnotify.Remove) {
-					slog.Info("watcher detected modified file:", "file", event.Name)
+				if event.Has(fsnotify.Create) {
+					info, err := os.Stat(event.Name)
+					if err == nil && info.IsDir() {
+						slog.Info("New user directory detected, adding watcher", "dir", event.Name)
+						if err = watcher.Add(event.Name); err != nil {
+							slog.Error("error adding new user directory to watcher", "error", err)
+						}
 
-					gatewayConfig, err = config.LoadAndValidateConfigFile(event.Name)
-					if err != nil {
-						slog.Error("error loading config", "error", err)
+						confPath := filepath.Join(event.Name, "nginx.conf")
+						if _, err := os.Stat(confPath); err == nil {
+							sendNginxToDataplane(confPath)
+						}
+						continue
 					}
+				}
 
-					err = config.UpdateNginxConfig(event.Name, "", gatewayConfig, store)
-					if err != nil {
-						slog.Error("error updating config", "error", err)
+				if filepath.Base(event.Name) == "nginx.conf" {
+					if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) || event.Has(fsnotify.Remove) {
+						slog.Info("watcher detected modified file:", "file", event.Name)
+
+						// send the config to the dataplane!
+						sendNginxToDataplane(event.Name)
+
 					}
 				}
 			case err, ok := <-watcher.Errors:
@@ -48,10 +63,76 @@ func Watch(gatewayConfig *config.GatewayConfig, store *config.ConfigStore) {
 		}
 	}()
 
-	err = watcher.Add(config.WatcherDirName)
+	root := utils.NGINXUserDirName
+	err = addUserDirs(watcher, root)
 	if err != nil {
 		slog.Error("error adding watcher:", "error", err)
 	}
 
+	err = watcher.Add(utils.NGINXUserDirName)
+	if err != nil {
+		slog.Error("error adding base watcher:", "error", err)
+	}
+
 	<-make(chan struct{})
+}
+
+func addUserDirs(w *fsnotify.Watcher, root string) error {
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			dirPath := filepath.Join(root, entry.Name())
+			if err = w.Add(dirPath); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func sendNginxToDataplane(filename string) {
+	body, err := os.ReadFile(filename)
+	if err != nil {
+		slog.Error("error opening file", "filename", filename, "error", err)
+		return
+	}
+
+	type SendData struct {
+		Filename string `json:"filename"`
+		Body     []byte `json:"body"`
+	}
+
+	sendData := SendData{
+		Filename: filename,
+		Body:     body,
+	}
+
+	data, err := json.Marshal(sendData)
+	if err != nil {
+		slog.Error("error encoding file", "filename", filename, "error", err)
+		return
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		"http://data-plane:1000/api/handle-config",
+		bytes.NewBuffer(data),
+	)
+	if err != nil {
+		slog.Error("error creating request to send to control plane", "error", err)
+		return
+	}
+
+	client := http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		slog.Error("error sending request to control plane", "error", err)
+		return
+	}
+	defer resp.Body.Close()
 }

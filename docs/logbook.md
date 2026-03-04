@@ -360,3 +360,68 @@ Requirement: Requests should be processed quickly
 - Uses a lot of cross container communicates which could be a security problem
 - Semantics analysis done on the control plane
 - Management Plane used for displaying the config to the user
+
+## 16th February
+- Started making the app scalable
+- Ideas
+  - Need to add a login to the management plane
+  - Need to store information per user instead of a single config
+  - Firebase?
+  - Store information somewhere else
+
+## 18th February
+Checklist for allowing multiple users
+
+### Phase 1 - Introduce Users & Persistence
+-[x] Add a Database - 21/02
+-[x] Create Tables - 21/02
+-[x] Implement Authentication - 23/02
+
+### Phase 2 - Scope Users by Config
+-[x] Modify Config Endpoints - 28/02
+
+### Phase 3 - Per-User NGINX Files
+-[x] Create User Config Directory 02/03
+-[x] Update Config Generator 02/03
+-[x] Atomic Writes File
+-[x] Serialize Reloads
+
+### Phase 4 - Concurrency Protection
+-[ ] Add optimistic Locking
+
+## 21st February
+Issues
+-[x] Config.html is not showing the gateway.yaml 24/02
+-[x] 401 unauthorised when trying to validate user 22/02
+-[x] STATE 23/02
+
+## 24th February
+- Instead of serving the config from a static location, the database should be contacted
+- See if any of the routes relating directly to the config are in need of changing?
+- What works:
+  - Management plane now displays the config by loading it from the postgres database
+- What is there still to do?
+  -[x] Edit the core functions e.g. updating the config file 28/02
+  -[x] Load actual configs from the database, not just "test" 28/02
+
+## 25th February
+-[x] In HandleNewConfig, content does not exist 28/02
+
+## 27th February
+- https://gateway.example.com/<user-id>/auth → Auth Service
+- https://gateway.example.com/<user-id>/content → Content Service
+- https://gateway.example.com/<user-id>/analytics → Analytics Service
+
+## 28th February
+- Merged phase 2 of scaling
+
+## 2nd March
+- Created signup on the management, logic handled in control plane
+- Updated the way NGINX configs are loaded, now done as soon as a user signs up
+  - Initially uses a default config
+- Began to modify the watcher to detect config changes, if change is detected it should notify the data plane
+
+## 3rd March
+- Watcher looks at correct directory
+- Per-User Config should be working
+- Problem: watched directory is not exist

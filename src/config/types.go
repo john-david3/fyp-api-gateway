@@ -1,5 +1,17 @@
 package config
 
+type RenderModel struct {
+	LimitZones  []LimitZone
+	Upstreams   []Upstream
+	Connections []Connections
+}
+
+type LimitZone struct {
+	Name string
+	Size int
+	Rate int
+}
+
 type (
 	GatewayConfig struct {
 		Connections []Connections `yaml:"connections" mapstructure:"connections"`

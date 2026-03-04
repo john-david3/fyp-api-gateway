@@ -30,22 +30,41 @@ func main() {
 		case <-ctx.Done():
 		}
 	}()
+	
+	go watcher.Watch()
 
-	store := config.NewConfigStore()
-
-	gatewayConfig, err := config.RegisterConfigFile(store)
-	if err != nil {
-		slog.Error("Error reading config file", "error", err)
-		cancel()
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		slog.Error("Error reading database connection", "error", "DATABASE_URL is not set")
 	}
 
-	go watcher.Watch(gatewayConfig, store)
+	db, err := config.NewDatabase(dsn)
+	if err != nil {
+		slog.Error("Error initialising database", "error", err)
+		return
+	}
+	defer db.Conn.Close()
+
+	if err = db.StartDB("/var/lib/init.sql"); err != nil {
+		slog.Error("Error running migration script", "error", err)
+		return
+	}
+	slog.Info("Initialised database")
+
+	server := &config.Server{DB: db}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/v1/config/metadata/latest", store.CheckIsConfigUpdated)
-	mux.HandleFunc("/v1/config/latest", store.ServeConfig)
+
+	// config handler routes
 	mux.HandleFunc("/analyse", semantics.RecvConfig)
 	mux.HandleFunc("/config/update", config.LoadNewConfig)
+
+	// database routes
+	mux.HandleFunc("/verify-signup", server.Signup)
+	mux.HandleFunc("/verify-login", server.VerifyLoginInfo)
+	mux.HandleFunc("/validate-session", server.ValidateSession)
+	mux.HandleFunc("/api/gateway", server.UserConfig)
+
 	slog.Info("Control plane listening on port 10000")
 	err = http.ListenAndServe(":10000", mux)
 	if err != nil {

@@ -7,7 +7,6 @@ import (
 	"fyp-api-gateway/src/config"
 	"log/slog"
 	"net/http"
-	"os"
 
 	"gopkg.in/yaml.v3"
 )
@@ -25,21 +24,33 @@ type RouteView struct {
 	RateLimit config.RateLimit
 }
 
-var oldConfPath = "/etc/config/gateway.yaml"
+type FinalFindings struct {
+	Errors  []string `json:"errors"`
+	Updates []string `json:"updates"`
+}
 
 func RecvConfig(w http.ResponseWriter, r *http.Request) {
-	slog.Info("Received config request")
-	var cfg config.GatewayConfig
+	slog.Info("Received config from management plane")
+	var newCfg config.GatewayConfig
 
-	if err := yaml.NewDecoder(r.Body).Decode(&cfg); err != nil {
+	cookie, err := r.Cookie("session")
+	if err != nil {
+		slog.Error("error getting session cookie ", "error", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	username := config.RetrieveUserBySessionId(cookie.Value)
+
+	if err = yaml.NewDecoder(r.Body).Decode(&newCfg); err != nil {
 		slog.Error("Error decoding config", "error", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 
 	// Analyse the new config file
-	slog.Info("Analysing new config file...")
-	findings, err := Analyse(cfg)
+	slog.Info("analysing new config file...")
+	findings, err := analyse(username, newCfg)
 	if err != nil {
 		slog.Error("Error analysing new config", "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -56,28 +67,25 @@ func RecvConfig(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func Analyse(cfg config.GatewayConfig) ([]byte, error) {
-	oldConfFile, err := os.OpenFile(oldConfPath, 0, 0644)
-	if err != nil {
-		slog.Error("Error opening old config file", "error", err)
-		return nil, err
-	}
+func analyse(username string, newCfg config.GatewayConfig) ([]byte, error) {
+	oldCfgStr := config.RetrieveUserConfig(username)
 
-	var oldConf config.GatewayConfig
-	if err = yaml.NewDecoder(oldConfFile).Decode(&oldConf); err != nil {
+	var oldCfg config.GatewayConfig
+	err := yaml.Unmarshal([]byte(oldCfgStr), &oldCfg)
+	if err != nil {
 		slog.Error("Error decoding config", "error", err)
 		return nil, err
 	}
 
-	oldConfig := flattenConfig(oldConf)
-	newConfig := flattenConfig(cfg)
+	oldConfig := flattenConfig(oldCfg)
+	newConfig := flattenConfig(newCfg)
 	foundErrors := validateConfigErrors(oldConfig, newConfig)
 	foundUpdates := explainDifferences(oldConfig, newConfig)
 
-	findingsMap := make(map[string][]string)
-	findingsMap["errors"] = foundErrors
-	findingsMap["updates"] = foundUpdates
-	findings, err := json.Marshal(findingsMap)
+	finalFindings := FinalFindings{}
+	finalFindings.Errors = foundErrors
+	finalFindings.Updates = foundUpdates
+	findings, err := json.Marshal(finalFindings)
 	if err != nil {
 		slog.Error("Error marshalling findings map", "error", err)
 		return nil, err
