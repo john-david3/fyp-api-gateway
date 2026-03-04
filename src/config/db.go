@@ -1,11 +1,10 @@
-package db
+package config
 
 import (
 	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"fyp-api-gateway/src/utils"
 	"log/slog"
 	"net/http"
@@ -95,15 +94,20 @@ func (s *Server) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: Store password hash
-	fmt.Println(loginInfo.Name)
 	_, err = s.DB.Conn.Exec(`
 		INSERT INTO users (username, password, config_yaml)
 		VALUES ($1, $2, $3);`,
 		loginInfo.Name, loginInfo.Password, utils.DefaultConfigContent,
 	)
-
 	if err != nil {
 		slog.Error("error inserting user", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	err = InitUserNGINX(loginInfo.Name)
+	if err != nil {
+		slog.Error("error initializing user", "error", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}

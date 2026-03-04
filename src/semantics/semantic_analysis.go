@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"fyp-api-gateway/src/config"
-	database "fyp-api-gateway/src/db"
 	"log/slog"
 	"net/http"
 
@@ -41,7 +40,7 @@ func RecvConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	username := database.RetrieveUserBySessionId(cookie.Value)
+	username := config.RetrieveUserBySessionId(cookie.Value)
 
 	if err = yaml.NewDecoder(r.Body).Decode(&newCfg); err != nil {
 		slog.Error("Error decoding config", "error", err)
@@ -69,7 +68,7 @@ func RecvConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func analyse(username string, newCfg config.GatewayConfig) ([]byte, error) {
-	oldCfgStr := database.RetrieveUserConfig(username)
+	oldCfgStr := config.RetrieveUserConfig(username)
 
 	var oldCfg config.GatewayConfig
 	err := yaml.Unmarshal([]byte(oldCfgStr), &oldCfg)

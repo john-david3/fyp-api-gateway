@@ -3,7 +3,6 @@ package auth
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -83,7 +82,6 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(r.Body)
 	err := json.NewDecoder(r.Body).Decode(&loginInfo)
 	if err != nil {
 		slog.Error("error decoding signup info", "error", err)

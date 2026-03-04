@@ -1,54 +1,41 @@
-worker_processes 1;
-error_log /var/log/nginx/error.log;
-events{
-    worker_connections 1024;
-}
-
-http{
-    include      mime.types;
-    default_type application/octet-stream;
-
-    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
-                  '$status $body_bytes_sent "$http_referer" '
-                  '"$http_user_agent" "$http_x_forwarded_for" '
-                  '"$bytes_sent" "$request_length" "$request_time" '
-                  '"$gzip_ratio" $server_protocol ';
-
-    access_log /var/log/nginx/access.log main;
-
-    {{- range .Connections }}
-    {{- range .Routes }}
-    limit_req_zone $binary_remote_addr zone={{ .Upstream.Name }}:{{ .RateLimit.Zone }}m rate={{ .RateLimit.Rate }}r/s;
-    {{- end }}
+    {{- range .LimitZones }}
+    limit_req_zone $binary_remote_addr zone={{ .Name }}:{{ .Size }}m rate={{ .Rate }}r/s;
     {{- end }}
 
-    {{/* Upstreams */ -}}
-    {{- range .Connections }}
-    {{- range .Routes }}
-    upstream {{ .Upstream.Name }} {
-        server services:{{ .Upstream.Port }};
+
+    {{- range .Upstreams }}
+    upstream {{ .Name }} {
+        server services:{{ .Port }};
+        keepalive 16;
     }
     {{- end }}
-    {{- end }}
 
-    {{/* Servers */ -}}
-    {{ range .Connections }}
+
+    {{- range .Connections }}
     server {
         listen {{ .Port }};
         server_name {{ .Host }};
 
-    {{ range .Routes }}
+        {{- range .Routes }}
         location {{ .Path }} {
-            {{if .Auth}}
-            auth_basic "Admin Access Only";
-            auth_basic_user_file /etc/apache2/.htpasswd;
+
+            {{- if .Auth }}
+            auth_basic "Restricted";
+            auth_basic_user_file /etc/nginx/.htpasswd;
             {{- end }}
 
-            limit_req zone={{ .Upstream.Name }} burst=12 delay=8;
+            limit_req zone={{ .Upstream.Name }};
+
+            proxy_http_version 1.1;
+            proxy_set_header Connection "";
+
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
             proxy_pass http://{{ .Upstream.Name }};
         }
-    {{ end }}
+        {{- end }}
     }
     {{- end }}
-
-}

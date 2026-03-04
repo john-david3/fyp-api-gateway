@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fyp-api-gateway/src/config"
-	database "fyp-api-gateway/src/db"
 	"fyp-api-gateway/src/semantics"
 	"fyp-api-gateway/src/watcher"
 	"log/slog"
@@ -31,23 +30,15 @@ func main() {
 		case <-ctx.Done():
 		}
 	}()
-
-	store := config.NewConfigStore()
-
-	gatewayConfig, err := config.RegisterConfigFile(store)
-	if err != nil {
-		slog.Error("Error reading config file", "error", err)
-		cancel()
-	}
-
-	go watcher.Watch(gatewayConfig, store)
+	
+	go watcher.Watch()
 
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
 		slog.Error("Error reading database connection", "error", "DATABASE_URL is not set")
 	}
 
-	db, err := database.NewDatabase(dsn)
+	db, err := config.NewDatabase(dsn)
 	if err != nil {
 		slog.Error("Error initialising database", "error", err)
 		return
@@ -60,13 +51,9 @@ func main() {
 	}
 	slog.Info("Initialised database")
 
-	server := &database.Server{DB: db}
+	server := &config.Server{DB: db}
 
 	mux := http.NewServeMux()
-
-	// watcher routes
-	mux.HandleFunc("/v1/config/metadata/latest", store.CheckIsConfigUpdated)
-	mux.HandleFunc("/v1/config/latest", store.ServeConfig)
 
 	// config handler routes
 	mux.HandleFunc("/analyse", semantics.RecvConfig)
