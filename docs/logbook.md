@@ -383,8 +383,8 @@ Checklist for allowing multiple users
 ### Phase 3 - Per-User NGINX Files
 -[x] Create User Config Directory 02/03
 -[x] Update Config Generator 02/03
--[ ] Atomic Writes File
--[ ] Serialize Reloads
+-[x] Atomic Writes File
+-[x] Serialize Reloads
 
 ### Phase 4 - Concurrency Protection
 -[ ] Add optimistic Locking
