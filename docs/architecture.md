@@ -32,7 +32,7 @@ flowchart TB
         end
     end
 
-%% Connections
+%% Connection
     Clients --"Uploads GatewayConfig/Registers Microservice"--> Dashboard
     Dashboard --"Downloads GatewayConfig"--> Clients
 Dashboard --"Manages"--> GatewayConfig

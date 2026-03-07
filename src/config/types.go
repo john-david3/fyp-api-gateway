@@ -1,55 +1,28 @@
 package config
 
 type RenderModel struct {
-	LimitZones  []LimitZone
-	Upstreams   []Upstream
-	Connections []Connections
-}
-
-type LimitZone struct {
-	Name string
-	Size int
-	Rate int
+	Connections []Connection
 }
 
 type (
 	GatewayConfig struct {
-		Connections []Connections `yaml:"connections" mapstructure:"connections"`
+		Connections Connection `yaml:"connections" mapstructure:"connections"`
 	}
 
-	Connections struct {
-		Host   string   `yaml:"host"    mapstructure:"host"`
-		Port   int      `yaml:"port"    mapstructure:"port"`
+	Connection struct {
 		Routes []Routes `yaml:"routes"  mapstructure:"routes"`
 	}
 
 	Routes struct {
 		Path      string    `yaml:"path"       mapstructure:"path"`
-		Upstream  Upstream  `yaml:"upstream"   mapstructure:"upstream"`
-		RateLimit RateLimit `yaml:"rate-limit" mapstructure:"rate_limit"`
+		Url       string    `yaml:"url"        mapstructure:"url"`
 		Auth      bool      `yaml:"auth"       mapstructure:"auth"`
-	}
-
-	Upstream struct {
-		Name string `yaml:"name" mapstructure:"name"`
-		Port int    `yaml:"port" mapstructure:"port"`
+		RateLimit RateLimit `yaml:"rate-limit" mapstructure:"rate_limit"`
+		ZoneName  string    `yaml:"zone-name"  mapstructure:"zone-name"`
 	}
 
 	RateLimit struct {
 		Zone int `yaml:"zone" mapstructure:"zone"`
 		Rate int `yaml:"rate" mapstructure:"rate"`
-	}
-)
-
-type (
-	ConfigMetadata struct {
-		Version   string `yaml:"version"   mapstructure:"version"`
-		Checksum  string `yaml:"checksum"  mapstructure:"checksum"`
-		Timestamp string `yaml:"timestamp" mapstructure:"timestamp"`
-	}
-
-	ConfigPayload struct {
-		Version string `yaml:"version" mapstructure:"version"`
-		Config  string `yaml:"config"  mapstructure:"config"`
 	}
 )
