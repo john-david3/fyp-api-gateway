@@ -51,3 +51,4 @@ test-routes:
 	curl "${HOST}/products"
 	curl "${HOST}/orders"
 	curl "${HOST}/protected"
+	curl "${HOST}/external-weather"

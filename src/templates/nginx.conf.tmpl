@@ -1,41 +1,39 @@
-    {{- range .LimitZones }}
-    limit_req_zone $binary_remote_addr zone={{ .Name }}:{{ .Size }}m rate={{ .Rate }}r/s;
-    {{- end }}
+{{- range .Connections }}
+{{- range .Routes }}
+{{- if .RateLimit }}
+limit_req_zone $binary_remote_addr zone={{ .ZoneName }}:{{ .RateLimit.Zone }}m rate={{ .RateLimit.Rate }}r/s;
+{{- end }}
+{{- end }}
+{{- end }}
 
+{{/* Server blocks */}}
+{{- range .Connections }}
+server {
+    listen 8080;
+    server_name _;
 
-    {{- range .Upstreams }}
-    upstream {{ .Name }} {
-        server services:{{ .Port }};
-        keepalive 16;
-    }
-    {{- end }}
+    {{- range .Routes }}
+    location {{ .Path }} {
 
-
-    {{- range .Connections }}
-    server {
-        listen {{ .Port }};
-        server_name {{ .Host }};
-
-        {{- range .Routes }}
-        location {{ .Path }} {
-
-            {{- if .Auth }}
-            auth_basic "Restricted";
-            auth_basic_user_file /etc/nginx/.htpasswd;
-            {{- end }}
-
-            limit_req zone={{ .Upstream.Name }};
-
-            proxy_http_version 1.1;
-            proxy_set_header Connection "";
-
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-
-            proxy_pass http://{{ .Upstream.Name }};
-        }
+        {{- if .Auth }}
+        auth_basic "Restricted";
+        auth_basic_user_file /etc/nginx/.htpasswd;
         {{- end }}
+
+        {{- if .RateLimit }}
+        limit_req zone={{ .ZoneName }};
+        {{- end }}
+
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_pass {{ .Url }};
     }
     {{- end }}
+}
+{{- end }}

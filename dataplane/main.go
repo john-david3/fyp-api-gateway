@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -60,18 +61,24 @@ func handleNewConfig(w http.ResponseWriter, r *http.Request) {
 
 	err = applyNginxConfig()
 	if err != nil {
-		slog.Error("Error applying nginx config", "filename", res.Filename)
+		slog.Error("Error applying nginx config", "error", err, "filename", res.Filename)
 		return
 	}
 }
 
 func applyNginxConfig() error {
-	if err := exec.Command("nginx", "-t").Run(); err != nil {
-		return err
+	cmd := exec.Command("nginx", "-t")
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("nginx config test failed: %s", string(output))
 	}
 
-	if err := exec.Command("nginx", "-s", "reload").Run(); err != nil {
-		return err
+	cmd = exec.Command("nginx", "-s", "reload")
+
+	output, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("nginx reload failed: %s", string(output))
 	}
 
 	return nil

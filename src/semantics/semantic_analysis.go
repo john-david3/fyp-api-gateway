@@ -7,6 +7,7 @@ import (
 	"fyp-api-gateway/src/config"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -16,12 +17,11 @@ type AnalysisResult struct {
 }
 
 type RouteView struct {
-	Host      string
-	Port      int
 	Path      string
+	Url       string
 	Auth      bool
-	Upstream  string
 	RateLimit config.RateLimit
+	ZoneName  string
 }
 
 type FinalFindings struct {
@@ -116,12 +116,8 @@ func validateConfigErrors(oldConf, newConf []RouteView) []string {
 			r1 := newConf[i]
 			r2 := newConf[j]
 
-			if r1.Host == r2.Host &&
-				r1.Port == r2.Port &&
-				pathShadows(r1.Path, r2.Path) {
-				findings = append(findings,
-					"Route "+r2.Path+" may be shadowed by "+r1.Path+" on "+
-						r1.Host+":"+fmt.Sprint(r1.Port))
+			if pathShadows(r1.Path, r2.Path) {
+				findings = append(findings, "Route "+r2.Path+" may be shadowed by "+r1.Path)
 			}
 		}
 	}
@@ -141,7 +137,7 @@ func explainDifferences(oldConf, newConf []RouteView) []string {
 		if !exists {
 			findings = append(findings,
 				"New route added: "+newRoute.Path+
-					" on "+newRoute.Host)
+					" on "+newRoute.Url)
 
 			if !newRoute.Auth {
 				findings = append(findings,
@@ -156,7 +152,7 @@ func explainDifferences(oldConf, newConf []RouteView) []string {
 		if !exists {
 			findings = append(findings,
 				"Route removed: "+oldRoute.Path+
-					" on "+oldRoute.Host)
+					" on "+oldRoute.Url)
 
 			if oldRoute.Auth {
 				findings = append(findings,
@@ -177,7 +173,7 @@ func explainDifferences(oldConf, newConf []RouteView) []string {
 		if oldRoute.Auth && !newRoute.Auth {
 			findings = append(findings,
 				"Authentication removed from route "+newRoute.Path+
-					" on "+newRoute.Host)
+					" on "+newRoute.Url)
 		}
 
 		// Auth Tightening
@@ -187,10 +183,10 @@ func explainDifferences(oldConf, newConf []RouteView) []string {
 		}
 
 		// Upstream Change
-		if oldRoute.Upstream != newRoute.Upstream {
+		if oldRoute.Url != newRoute.Url {
 			findings = append(findings,
 				"Traffic for "+newRoute.Path+" will be routed from "+
-					oldRoute.Upstream+" to "+newRoute.Upstream)
+					oldRoute.Url+" to "+newRoute.Url)
 		}
 
 		// Rate Limit Tightening
@@ -216,26 +212,29 @@ func explainDifferences(oldConf, newConf []RouteView) []string {
 func flattenConfig(cfg config.GatewayConfig) []RouteView {
 	var routes []RouteView
 
-	for _, c := range cfg.Connections {
-		for _, r := range c.Routes {
-			routes = append(routes, RouteView{
-				Host:      c.Host,
-				Port:      c.Port,
-				Path:      r.Path,
-				Auth:      r.Auth,
-				Upstream:  r.Upstream.Name,
-				RateLimit: r.RateLimit,
-			})
+	c := cfg.Connections
+	for _, r := range c.Routes {
+		zoneName := strings.ReplaceAll(r.Path, "/", "_")
+		if zoneName == "" {
+			zoneName = "root"
 		}
+
+		routes = append(routes, RouteView{
+			Path:      r.Path,
+			Url:       r.Url,
+			Auth:      r.Auth,
+			RateLimit: r.RateLimit,
+			ZoneName:  zoneName,
+		})
 	}
+
 	return routes
 }
 
 func indexRoutes(routes []RouteView) map[string]RouteView {
 	index := make(map[string]RouteView)
 	for _, r := range routes {
-		key := r.Host + ":" + fmt.Sprint(r.Port) + r.Path
-		index[key] = r
+		index[r.Path] = r
 	}
 	return index
 }

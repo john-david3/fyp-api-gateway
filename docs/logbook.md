@@ -425,3 +425,10 @@ Issues
 - Watcher looks at correct directory
 - Per-User Config should be working
 - Problem: watched directory is not exist
+
+## 4th March
+- Finished adding multi-tenant
+- Validating project works for APIs not running locally
+
+## 7th March
+-[ ] Validate that any URLs a user adds to their config has a trailing slash

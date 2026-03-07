@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"text/template"
 
 	"gopkg.in/yaml.v3"
@@ -92,44 +93,31 @@ func renderNginxTemplate(gatewayCfg *GatewayConfig, nginxUserConfDir string) err
 	return nil
 }
 
-func buildRenderModel(cfg *GatewayConfig) RenderModel {
-	upstreamMap := make(map[string]Upstream)
-	zoneMap := make(map[string]LimitZone)
+func buildRenderModel(gw *GatewayConfig) RenderModel {
+	model := RenderModel{}
 
-	for _, conn := range cfg.Connections {
-		for i, route := range conn.Routes {
+	c := gw.Connections
+	conn := Connection{}
 
-			// Namespace zone name using upstream name
-			zoneName := route.Upstream.Name
-
-			upstreamMap[route.Upstream.Name] = route.Upstream
-
-			zoneMap[zoneName] = LimitZone{
-				Name: zoneName,
-				Size: route.RateLimit.Zone,
-				Rate: route.RateLimit.Rate,
-			}
-
-			// Ensure route references consistent zone name
-			conn.Routes[i].Upstream.Name = route.Upstream.Name
+	for _, r := range c.Routes {
+		zoneName := strings.ReplaceAll(r.Path, "/", "_")
+		// if path is just "/", fallback
+		if zoneName == "" {
+			zoneName = "root"
 		}
+
+		conn.Routes = append(conn.Routes, Routes{
+			Path:      r.Path,
+			Url:       r.Url,
+			Auth:      r.Auth,
+			RateLimit: r.RateLimit,
+			ZoneName:  zoneName,
+		})
 	}
 
-	var upstreams []Upstream
-	for _, u := range upstreamMap {
-		upstreams = append(upstreams, u)
-	}
+	model.Connections = append(model.Connections, conn)
 
-	var zones []LimitZone
-	for _, z := range zoneMap {
-		zones = append(zones, z)
-	}
-
-	return RenderModel{
-		LimitZones:  zones,
-		Upstreams:   upstreams,
-		Connections: cfg.Connections,
-	}
+	return model
 }
 
 func LoadNewConfig(w http.ResponseWriter, r *http.Request) {
