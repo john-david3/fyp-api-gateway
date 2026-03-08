@@ -13,7 +13,7 @@ services:
       dockerfile: management/Dockerfile
     container_name: management-plane
     ports:
-      - "80:80"
+      - "81:81"
     volumes:
       - "./management/static/gateway.conf:/etc/config/gateway.conf"
     restart: unless-stopped
