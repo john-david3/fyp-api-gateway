@@ -1,10 +1,10 @@
 const editor = document.getElementById("editor");
 const uploadBtn = document.getElementById("saveBtn");
 
-const FILE_URL = "http://54.75.125.2:81/file/gateway";
-const SAVE_URL = "http://54.75.125.2:81/file/upload";
-const FINDINGS_URL = "http://54.75.125.2:81/file/retrieve";
-const ACCEPT_URL = "http://54.75.125.2:81/file/accept";
+const FILE_URL = "/file/gateway";
+const SAVE_URL = "/file/upload";
+const FINDINGS_URL = "/file/retrieve";
+const ACCEPT_URL = "/file/accept";
 
 window.addEventListener("DOMContentLoaded", async () => {
     try {
