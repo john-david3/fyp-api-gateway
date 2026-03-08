@@ -21,7 +21,7 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
     const name = document.getElementById("name").value;
     const password = document.getElementById("password").value;
 
-    sendLoginData(name, password, "http://localhost:80/api/login");
+    sendLoginData(name, password, "http://54.75.125.2:80/api/login");
 });
 
 document.getElementById("signupForm").addEventListener("submit", function(e){
@@ -30,5 +30,5 @@ document.getElementById("signupForm").addEventListener("submit", function(e){
     const name = document.getElementById("signupName").value;
     const password = document.getElementById("signupPassword").value;
 
-    sendLoginData(name, password, "http://localhost:80/api/signup");
+    sendLoginData(name, password, "http://54.75.125.2:80/api/signup");
 });

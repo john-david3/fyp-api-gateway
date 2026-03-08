@@ -7,7 +7,7 @@ COMPOSE     = $(DOCKER) compose
 PROJECT_DIR = cmd
 MAIN        = main.go
 
-HOST = http://localhost:8080
+HOST = http://54.75.125.2:8080
 
 WAIT_RETRIES=5
 WAIT_INTERVAL=3
@@ -35,7 +35,7 @@ docker-stop:
 wait:
 	@echo "Waiting for $(SERVICE) on port $(PORT)..."
 	@for i in $(shell seq 1 $(WAIT_RETRIES)); do \
-		if curl -s http://localhost:$(PORT)/healthz >/dev/null 2>&1; then \
+		if curl -s http://54.75.125.2:$(PORT)/healthz >/dev/null 2>&1; then \
 			echo "$(SERVICE) is ready"; \
 			break; \
 		fi; \
