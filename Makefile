@@ -3,7 +3,7 @@ GORUN  = $(GOCMD) run
 GOTEST = $(GOCMD) test
 
 DOCKER      = docker
-COMPOSE     = $(DOCKER) compose
+COMPOSE     = $(DOCKER)-compose
 PROJECT_DIR = cmd
 MAIN        = main.go
 
