@@ -166,7 +166,8 @@ func LoadNewConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	username := RetrieveUserBySessionId(cookie.Value)
-	nginxUserConfPath := utils.NGINXDirName + "users/" + username + "/" + utils.NGINXConfigFileName
+	nginxUserConfDir := utils.NGINXDirName + "users/" + username + "/"
+	nginxUserConfPath := nginxUserConfDir + utils.NGINXConfigFileName
 
 	gatewayConf, err := loadAndValidateGatewayConf(req.Content)
 	if err != nil {
@@ -183,7 +184,7 @@ func LoadNewConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Atomic writes
-	tempFile, err := os.CreateTemp(nginxUserConfPath, "nginx-*.conf")
+	tempFile, err := os.CreateTemp(nginxUserConfDir, "nginx-*.conf")
 	if err != nil {
 		slog.Error("failed creating temp file", "error", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
