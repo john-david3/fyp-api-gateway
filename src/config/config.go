@@ -184,6 +184,13 @@ func LoadNewConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Atomic writes
+	renderedConfig, err := os.ReadFile(nginxUserConfPath)
+	if err != nil {
+		slog.Error("failed to read rendered NGINX template", "error", err)
+		http.Error(w, "failed to render NGINX template", http.StatusInternalServerError)
+		return
+	}
+
 	tempFile, err := os.CreateTemp(nginxUserConfDir, "nginx-*.conf")
 	if err != nil {
 		slog.Error("failed creating temp file", "error", err)
@@ -192,7 +199,7 @@ func LoadNewConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	defer os.Remove(tempFile.Name())
 
-	if _, err = tempFile.Write(body); err != nil {
+	if _, err = tempFile.Write(renderedConfig); err != nil {
 		slog.Error("failed writing temp config", "error", err)
 		tempFile.Close()
 		http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -206,7 +213,7 @@ func LoadNewConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Atomic replace
-	if err := os.Rename(tempFile.Name(), nginxUserConfPath); err != nil {
+	if err = os.Rename(tempFile.Name(), nginxUserConfPath); err != nil {
 		slog.Error("failed replacing config file", "error", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
