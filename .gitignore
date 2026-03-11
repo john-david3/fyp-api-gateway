@@ -5,3 +5,5 @@
 /.data
 /.src
 **.pem
+/dataplane/nginx/users
+/access-logs
