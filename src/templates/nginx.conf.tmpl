@@ -1,18 +1,18 @@
-{{- range .Connections }}
-{{- range .Routes }}
+{{- range .Connections.Routes }}
 {{- if .RateLimit }}
-limit_req_zone $binary_remote_addr zone={{ .ZoneName }}:{{ .RateLimit.Zone }}m rate={{ .RateLimit.Rate }}r/s;
-{{- end }}
+limit_req_zone $binary_remote_addr zone={{ $.Username }}_{{ .ZoneName }}:{{ .RateLimit.Zone }}m rate={{ .RateLimit.Rate }}r/s;
 {{- end }}
 {{- end }}
 
 {{/* Server blocks */}}
-{{- range .Connections }}
 server {
     listen 8080;
     server_name _;
 
-    {{- range .Routes }}
+    access_log /var/log/nginx/users/{{ .Username }}/access.log;
+    error_log /var/log/nginx/users/{{ .Username }}/error.log;
+
+    {{- range .Connections.Routes }}
     location {{ .Path }} {
 
         {{- if .Auth }}
@@ -21,7 +21,7 @@ server {
         {{- end }}
 
         {{- if .RateLimit }}
-        limit_req zone={{ .ZoneName }};
+        limit_req zone={{ $.Username }}_{{ .ZoneName }};
         {{- end }}
 
         proxy_http_version 1.1;
@@ -36,4 +36,3 @@ server {
     }
     {{- end }}
 }
-{{- end }}

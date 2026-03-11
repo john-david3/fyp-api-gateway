@@ -47,6 +47,14 @@ func handleNewConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	username := filepath.Base(filepath.Dir(res.Filename))
+	logDir := "/var/log/nginx/users/" + username
+	err = os.MkdirAll(logDir, 0755)
+	if err != nil {
+		slog.Error("Error creating log directory", "error", err)
+		return
+	}
+
 	file, err := os.Create(res.Filename)
 	if err != nil {
 		slog.Error("Error creating file", "filename", res.Filename)

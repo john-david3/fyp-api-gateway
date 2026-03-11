@@ -14,6 +14,6 @@ WORKDIR /app
 COPY --from=builder /app/main .
 COPY --from=builder /app/management/static ./static
 
-EXPOSE 80
+EXPOSE 81
 RUN chmod +x /app/main
 CMD ["./main"]

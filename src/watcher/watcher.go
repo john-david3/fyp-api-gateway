@@ -131,7 +131,7 @@ func sendNginxToDataplane(filename string) {
 	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		slog.Error("error sending request to control plane", "error", err)
+		slog.Error("error sending request to data plane", "error", err)
 		return
 	}
 	defer resp.Body.Close()
