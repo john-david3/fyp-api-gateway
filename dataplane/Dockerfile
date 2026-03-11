@@ -22,7 +22,6 @@ RUN apk update && apk add --no-cache apache2-utils
 RUN mkdir -p /etc/apache2 && \
     htpasswd -cb /etc/apache2/.htpasswd "$HTPASSWD_USER" "$HTPASSWD_PASS"
 
-
 EXPOSE 8080
 
 CMD ["sh", "-c", "./main & exec nginx -g 'daemon off;'"]

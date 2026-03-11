@@ -18,6 +18,11 @@ type ConfRequest struct {
 	Content string `json:"content"`
 }
 
+type TemplateData struct {
+	Username    string
+	Connections Connection
+}
+
 func InitUserNGINX(username string) error {
 	// load the default config
 	gatewayConf, err := loadAndValidateGatewayConf(utils.DefaultConfigContent)
@@ -47,7 +52,9 @@ func InitUserNGINX(username string) error {
 		return err
 	}
 
-	err = renderNginxTemplate(gatewayConf, nginxUserConfDir)
+	templateData := buildTemplateData(username, gatewayConf)
+
+	err = renderNginxTemplate(templateData, nginxUserConfDir)
 	if err != nil {
 		slog.Error("failed rendering NGINX template", "error", err)
 		return err
@@ -67,9 +74,7 @@ func loadAndValidateGatewayConf(body string) (*GatewayConfig, error) {
 	return &config, nil
 }
 
-func renderNginxTemplate(gatewayCfg *GatewayConfig, nginxUserConfDir string) error {
-	renderModel := buildRenderModel(gatewayCfg)
-
+func renderNginxTemplate(data TemplateData, nginxUserConfDir string) error {
 	// load the template file
 	tmpl, err := template.ParseFiles(utils.NGINXTemplateDirName + utils.NGINXTemplateFileName)
 	if err != nil {
@@ -78,7 +83,7 @@ func renderNginxTemplate(gatewayCfg *GatewayConfig, nginxUserConfDir string) err
 
 	// Create the updated NGINX config file and save it into the file containing the current config
 	var buf bytes.Buffer
-	if err = tmpl.Execute(&buf, renderModel); err != nil {
+	if err = tmpl.Execute(&buf, data); err != nil {
 		slog.Error("Error executing template: ", "error", err)
 		return err
 	}
@@ -93,15 +98,11 @@ func renderNginxTemplate(gatewayCfg *GatewayConfig, nginxUserConfDir string) err
 	return nil
 }
 
-func buildRenderModel(gw *GatewayConfig) RenderModel {
-	model := RenderModel{}
-
-	c := gw.Connections
+func buildTemplateData(username string, gw *GatewayConfig) TemplateData {
 	conn := Connection{}
 
-	for _, r := range c.Routes {
+	for _, r := range gw.Connections.Routes {
 		zoneName := strings.ReplaceAll(r.Path, "/", "_")
-		// if path is just "/", fallback
 		if zoneName == "" {
 			zoneName = "root"
 		}
@@ -115,9 +116,7 @@ func buildRenderModel(gw *GatewayConfig) RenderModel {
 		})
 	}
 
-	model.Connections = append(model.Connections, conn)
-
-	return model
+	return TemplateData{Username: username, Connections: conn}
 }
 
 func LoadNewConfig(w http.ResponseWriter, r *http.Request) {
@@ -176,7 +175,9 @@ func LoadNewConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = renderNginxTemplate(gatewayConf, nginxUserConfPath)
+	templateData := buildTemplateData(username, gatewayConf)
+
+	err = renderNginxTemplate(templateData, nginxUserConfPath)
 	if err != nil {
 		slog.Error("failed to render NGINX template", "error", err)
 		http.Error(w, "failed to render NGINX template", http.StatusInternalServerError)
