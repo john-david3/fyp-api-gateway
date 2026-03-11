@@ -13,7 +13,7 @@ services:
       dockerfile: management/Dockerfile
     container_name: management-plane
     ports:
-      - "80:80"
+      - "81:81"
     volumes:
       - "./management/static/gateway.conf:/etc/config/gateway.conf"
     restart: unless-stopped
@@ -32,6 +32,9 @@ services:
       - "8080:8080"
     env_file:
       - .env
+    volumes:
+      - ./dataplane/nginx/users:/etc/nginx/users
+      - ./access-logs:/var/log/nginx/users
     restart: unless-stopped
     networks:
       - gateway_net
@@ -124,6 +127,7 @@ services:
     volumes:
       - ./src/collector/configs/alloy-local-config.yaml:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./access-logs:/var/log/nginx/users:ro
     command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     ports:
       - 12345:12345
@@ -131,6 +135,7 @@ services:
       - gateway
     networks:
       - loki
+      - gateway_net
 
   minio:
     image: minio/minio

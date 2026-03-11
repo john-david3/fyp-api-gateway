@@ -59,7 +59,7 @@ func RecvConfig(w http.ResponseWriter, r *http.Request) {
 
 	// send the findings back to the frontend
 	slog.Info("Sending data back to management plane")
-	_, err = http.Post("http://management-plane:80/file/findings", "application/json", bytes.NewBuffer(findings))
+	_, err = http.Post("http://management-plane:81/file/findings", "application/json", bytes.NewBuffer(findings))
 	if err != nil {
 		slog.Error("Error posting new config", "error", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
