@@ -431,4 +431,10 @@ Issues
 - Validating project works for APIs not running locally
 
 ## 7th March
--[ ] Validate that any URLs a user adds to their config has a trailing slash
+-[x] Validate that any URLs a user adds to their config has a trailing slash
+
+## 9th March
+- Project is not up on AWS cloud
+
+## 11th March
+- Fixed grafana and loki not working locally

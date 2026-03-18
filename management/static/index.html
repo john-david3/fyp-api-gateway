@@ -3,8 +3,41 @@
 <head>
     <title>API Gateway</title>
     <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
-    <h1>There is nothing here: go to /auth</h1>
+    <header>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/auth">Signup/Login</a>
+            <a href="/config">Config File</a>
+        </nav>
+    </header>
+
+    <div class="home-hero">
+        <div class="home-hero__badge">API Gateway</div>
+        <h1 class="home-hero__title">Manage your API<br>configuration</h1>
+        <p class="home-hero__subtitle">Edit, validate, and deploy your gateway config from one place. Changes are checked for errors before they go live.</p>
+        <div class="home-hero__actions">
+            <a href="/auth" class="btn-primary">Get Started</a>
+            <a href="/config" class="btn-ghost">Open Config Editor →</a>
+        </div>
+    </div>
+
+    <div class="home-cards">
+        <div class="home-card">
+            <h2>Config Editor</h2>
+            <p>Edit your gateway configuration file with a built-in editor and instant validation feedback.</p>
+        </div>
+        <div class="home-card">
+            <h2>Validation</h2>
+            <p>Every change is automatically scanned for errors and warnings before it can be accepted.</p>
+        </div>
+        <div class="home-card">
+            <h2>Live Deployment</h2>
+            <p>Accept validated configs and push them live instantly with a single click.</p>
+        </div>
+    </div>
+
 </body>
 </html>
