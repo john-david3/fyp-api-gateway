@@ -12,16 +12,16 @@ func main() {
 
 	// frontend routes
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/auth", http.StatusSeeOther)
-	})
+	//mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	//	http.Redirect(w, r, "/", http.StatusSeeOther)
+	//})
 	mux.HandleFunc("/auth", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/auth.html")
 	})
 	mux.HandleFunc("/config", auth.RequireSession(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/config.html")
 	}))
-	mux.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/index.html")
 	})
 
