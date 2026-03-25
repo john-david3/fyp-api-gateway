@@ -184,6 +184,7 @@ func LoadNewConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Atomic writes
 	renderedConfig, err := os.ReadFile(nginxUserConfPath)
 	if err != nil {
 		slog.Error("failed to read rendered NGINX template", "error", err)

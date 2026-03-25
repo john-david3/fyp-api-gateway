@@ -3,31 +3,45 @@
 <head>
     <title>Login</title>
     <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
-    <h1>Signup</h1>
-    <form id="signupForm">
-        <label for="signupName">Enter Name: </label><br/>
-        <input type="text" id="signupName" name="signupName" /><br />
+    <header>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/auth">Signup/Login</a>
+            <a href="/config">Config File</a>
+        </nav>
+    </header>
 
-        <label for="signupPassword">Enter Password: </label><br/>
-        <input type="password" id="signupPassword" name="signupPassword" /><br />
+    <main class="auth">
+        <section>
+            <h1>Signup</h1>
+            <form id="signupForm">
+                <label for="signupName">Name</label>
+                <input type="text" id="signupName" name="signupName" />
 
-        <input type="submit" value="submit">
-    </form>
+                <label for="signupPassword">Password</label>
+                <input type="password" id="signupPassword" name="signupPassword" />
 
-    <h1>Login</h1>
-    <form id="loginForm">
-        <label for="name">Enter Name: </label><br/>
-        <input type="text" id="name" name="name" /><br />
+                <input type="submit" value="Create Account">
+            </form>
+        </section>
 
-        <label for="password">Enter Password: </label><br/>
-        <input type="password" id="password" name="password" /><br />
+        <section>
+            <h1>Login</h1>
+            <form id="loginForm">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" />
 
-        <input type="submit" value="submit">
-    </form>
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" />
+
+                <input type="submit" value="Sign In">
+            </form>
+        </section>
+    </main>
 
     <script src="/static/auth.js"></script>
-
 </body>
 </html>
