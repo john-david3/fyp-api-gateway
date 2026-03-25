@@ -7,7 +7,7 @@ limit_req_zone $binary_remote_addr zone={{ $.Username }}_{{ .ZoneName }}:{{ .Rat
 {{/* Server blocks */}}
 server {
     listen 8080;
-    server_name _;
+    server_name {{ .Username }};
 
     access_log /var/log/nginx/users/{{ .Username }}/access.log;
     error_log /var/log/nginx/users/{{ .Username }}/error.log;
