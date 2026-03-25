@@ -8,9 +8,7 @@ const ACCEPT_URL = "/file/accept";
 
 window.addEventListener("DOMContentLoaded", async () => {
     try {
-        // retrieve the users config file from the database
         const response = await fetch(FILE_URL);
-
         if (!response.ok) throw new Error(`Failed to load ${FILE_URL}: ${response.statusText}`);
         const text = await response.text();
         editor.value = text;
@@ -24,7 +22,6 @@ uploadBtn.addEventListener("click", async () => {
     const content = editor.value;
 
     try {
-        // Send new config to backend
         const response = await fetch(SAVE_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -33,18 +30,17 @@ uploadBtn.addEventListener("click", async () => {
 
         if (!response.ok) throw new Error(`Save failed: ${response.statusText}`);
 
-        // Wait for findings to appear (poll until non-empty)
         const findings = await pollFindings();
 
         if (!findings) {
-            alert("Could not retrieve findings from backend.");
+            showMessageModal("Error", "Could not retrieve findings from the backend.", "error");
             return;
         }
 
-        displayFindings(findings);
+        showFindingsModal(findings, content);
 
     } catch (err) {
-        alert("Error saving: " + err.message);
+        showMessageModal("Error", "Error saving: " + err.message, "error");
     }
 });
 
@@ -54,9 +50,7 @@ async function pollFindings(retries = 10, delayMs = 500) {
             const res = await fetch(FINDINGS_URL);
             if (res.ok) {
                 const text = await res.text();
-                if (text.trim() !== "") {
-                    return JSON.parse(text);
-                }
+                if (text.trim() !== "") return JSON.parse(text);
             }
         } catch (err) {
             console.error("Polling error:", err);
@@ -66,69 +60,142 @@ async function pollFindings(retries = 10, delayMs = 500) {
     return null;
 }
 
-// Display findings in the DOM
-function displayFindings(findings) {
-    const container = document.getElementById("findings");
-    container.innerHTML = "";
+function openModal(title) {
+    const backdrop = document.createElement("div");
+    backdrop.className = "modal-backdrop";
+
+    const dialog = document.createElement("div");
+    dialog.className = "modal";
+    dialog.setAttribute("role", "dialog");
+    dialog.setAttribute("aria-modal", "true");
+
+    const header = document.createElement("div");
+    header.className = "modal-header";
+
+    const titleEl = document.createElement("h2");
+    titleEl.className = "modal-title";
+    titleEl.textContent = title;
+
+    const closeBtn = document.createElement("button");
+    closeBtn.className = "modal-close";
+    closeBtn.innerHTML = "&times;";
+    closeBtn.setAttribute("aria-label", "Close");
+    closeBtn.addEventListener("click", () => closeModal(backdrop));
+
+    header.appendChild(titleEl);
+    header.appendChild(closeBtn);
+
+    const body = document.createElement("div");
+    body.className = "modal-body";
+
+    const footer = document.createElement("div");
+    footer.className = "modal-footer";
+
+    dialog.appendChild(header);
+    dialog.appendChild(body);
+    dialog.appendChild(footer);
+    backdrop.appendChild(dialog);
+    document.body.appendChild(backdrop);
+
+    backdrop.addEventListener("click", (e) => {
+        if (e.target === backdrop) closeModal(backdrop);
+    });
+
+    const escHandler = (e) => {
+        if (e.key === "Escape") {
+            closeModal(backdrop);
+            document.removeEventListener("keydown", escHandler);
+        }
+    };
+    document.addEventListener("keydown", escHandler);
+
+    requestAnimationFrame(() => backdrop.classList.add("modal-backdrop--open"));
+
+    return { backdrop, body, footer };
+}
+
+function closeModal(backdrop) {
+    backdrop.classList.remove("modal-backdrop--open");
+    backdrop.addEventListener("transitionend", () => backdrop.remove(), { once: true });
+}
+
+function showMessageModal(title, message, type = "info") {
+    const { backdrop, body, footer } = openModal(title);
+
+    const msg = document.createElement("p");
+    msg.className = `modal-message modal-message--${type}`;
+    msg.textContent = message;
+    body.appendChild(msg);
+
+    const okBtn = document.createElement("button");
+    okBtn.textContent = "OK";
+    okBtn.addEventListener("click", () => closeModal(backdrop));
+    footer.appendChild(okBtn);
+}
+
+function showFindingsModal(findings, content) {
+    const { backdrop, body, footer } = openModal("Config Validation Results");
 
     let hasErrors = false;
 
-    // Check each key in findings
     for (const key in findings) {
-        const section = document.createElement("div");
-        section.innerHTML = `<h3>${key}</h3>`;
-        const list = document.createElement("ul");
-
         const items = findings[key] || [];
 
-        items.forEach(item => {
-            const li = document.createElement("li");
-            li.textContent = item;
+        const section = document.createElement("div");
+        section.className = "modal-section";
 
-            if (key.toLowerCase() === "errors") li.classList.add("error");
-            if (key.toLowerCase() === "warnings") li.classList.add("warning");
+        const sectionTitle = document.createElement("h3");
+        sectionTitle.className = "modal-section-title";
+        sectionTitle.textContent = key;
+        section.appendChild(sectionTitle);
 
-            list.appendChild(li);
-        });
-
-        section.appendChild(list);
-        container.appendChild(section);
-
-        // Only mark as hasErrors if errors array is non-empty
-        if (key.toLowerCase() === "errors" && items.length > 0) {
-            hasErrors = true;
+        if (items.length === 0) {
+            const none = document.createElement("p");
+            none.className = "modal-none";
+            none.textContent = "None";
+            section.appendChild(none);
+        } else {
+            const list = document.createElement("ul");
+            list.className = "modal-list";
+            items.forEach(item => {
+                const li = document.createElement("li");
+                li.textContent = item;
+                if (key.toLowerCase() === "errors")   li.classList.add("error");
+                if (key.toLowerCase() === "warnings") li.classList.add("warning");
+                list.appendChild(li);
+            });
+            section.appendChild(list);
         }
+
+        body.appendChild(section);
+
+        if (key.toLowerCase() === "errors" && items.length > 0) hasErrors = true;
     }
 
-    // Show Accept button if there are no errors, or if findings map is empty
-    const shouldShowAccept = !hasErrors;
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "Close";
+    closeBtn.className = "btn-secondary";
+    closeBtn.addEventListener("click", () => closeModal(backdrop));
+    footer.appendChild(closeBtn);
 
-    if (shouldShowAccept) {
+    if (!hasErrors) {
         const acceptBtn = document.createElement("button");
         acceptBtn.textContent = "Accept Changes";
-        acceptBtn.id = "acceptBtn";
-
         acceptBtn.addEventListener("click", async () => {
-            const content = editor.value;
-
             try {
-                console.log(content);
                 const response = await fetch(ACCEPT_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ content: content })
                 });
-                if (!response.ok) {
-                    throw new Error("Accept failed");
-                }
-                alert("Configuration applied successfully!");
-                acceptBtn.remove();
+                if (!response.ok) throw new Error("Accept failed");
+                closeModal(backdrop);
+                showMessageModal("Success", "Configuration applied successfully!", "success");
             } catch (err) {
-                alert("Error applying config: " + err.message);
+                closeModal(backdrop);
+                showMessageModal("Error", "Error applying config: " + err.message, "error");
             }
         });
-
-        container.appendChild(acceptBtn);
+        footer.appendChild(acceptBtn);
     }
 }
-
