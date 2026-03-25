@@ -38,7 +38,7 @@ func Watch() {
 						}
 
 						confPath := filepath.Join(event.Name, "nginx.conf")
-						if _, err := os.Stat(confPath); err == nil {
+						if _, err = os.Stat(confPath); err == nil {
 							sendNginxToDataplane(confPath)
 						}
 						continue
