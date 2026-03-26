@@ -75,6 +75,7 @@ func handleNewConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func applyNginxConfig() error {
+	slog.Info("attempting to reload nginx config")
 	cmd := exec.Command("nginx", "-t")
 
 	output, err := cmd.CombinedOutput()
