@@ -92,7 +92,7 @@ func handleNewConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func applyNginxConfig() error {
-	slog.Info("applying NGINX config")
+	slog.Info("reloading nginx config")
 	cmd := exec.Command("nginx", "-t")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
