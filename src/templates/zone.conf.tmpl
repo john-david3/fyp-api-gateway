@@ -1,0 +1,5 @@
+{{- range .Connections.Routes }}
+{{- if .RateLimit }}
+limit_req_zone $binary_remote_addr zone={{ $.Username }}_{{ .ZoneName }}:{{ .RateLimit.Zone }}m rate={{ .RateLimit.Rate }}r/s;
+{{- end }}
+{{- end }}
