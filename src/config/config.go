@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -24,19 +25,26 @@ type TemplateData struct {
 }
 
 func InitUserNGINX(username string) error {
-	// load the default config
 	gatewayConf, err := loadAndValidateGatewayConf(utils.DefaultConfigContent)
 	if err != nil {
 		slog.Error("failed to load and validate gateway config", "error", err)
 		return err
 	}
 
-	nginxUserConfDir := utils.NGINXDirName + "users/" + username + "/" + utils.NGINXConfigFileName
+	nginxUserConfDir := utils.NGINXDirName + "users/" + username + "/"
+	nginxUserConfFile := nginxUserConfDir + utils.NGINXConfigFileName
+	nginxUserZoneFile := nginxUserConfDir + utils.NGINXZoneFileName
 
 	// create new user nginx file
-	_, err = os.Stat(nginxUserConfDir)
+	_, err = os.Stat(nginxUserConfFile)
 	if err == nil {
 		slog.Error("NGINX config file already exists")
+		return err
+	}
+
+	_, err = os.Stat(nginxUserZoneFile)
+	if err == nil {
+		slog.Error("NGINX zone file already exists")
 		return err
 	}
 
@@ -46,7 +54,13 @@ func InitUserNGINX(username string) error {
 		return err
 	}
 
-	_, err = os.Create(nginxUserConfDir)
+	_, err = os.Create(nginxUserConfFile)
+	if err != nil {
+		slog.Error("failed creating users config", "error", err)
+		return err
+	}
+
+	_, err = os.Create(nginxUserZoneFile)
 	if err != nil {
 		slog.Error("failed creating users config", "error", err)
 		return err
@@ -54,7 +68,7 @@ func InitUserNGINX(username string) error {
 
 	templateData := buildTemplateData(username, gatewayConf)
 
-	err = renderNginxTemplate(templateData, nginxUserConfDir)
+	_, _, err = renderNginxTemplate(templateData)
 	if err != nil {
 		slog.Error("failed rendering NGINX template", "error", err)
 		return err
@@ -64,8 +78,19 @@ func InitUserNGINX(username string) error {
 }
 
 func loadAndValidateGatewayConf(body string) (*GatewayConfig, error) {
-	var config GatewayConfig
+	var meaningful []string
+	for _, line := range strings.Split(body, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed != "" && !strings.HasPrefix(trimmed, "#") {
+			meaningful = append(meaningful, line)
+		}
+	}
 
+	if len(meaningful) == 0 {
+		return &GatewayConfig{}, nil
+	}
+
+	var config GatewayConfig
 	decoder := yaml.NewDecoder(bytes.NewReader([]byte(body)))
 	if err := decoder.Decode(&config); err != nil {
 		return nil, err
@@ -74,28 +99,30 @@ func loadAndValidateGatewayConf(body string) (*GatewayConfig, error) {
 	return &config, nil
 }
 
-func renderNginxTemplate(data TemplateData, nginxUserConfDir string) error {
-	// load the template file
-	tmpl, err := template.ParseFiles(utils.NGINXTemplateDirName + utils.NGINXTemplateFileName)
+func renderNginxTemplate(data TemplateData) (string, string, error) {
+	zoneTmpl, err := template.ParseFiles(utils.NGINXTemplateDirName + utils.NGINXZoneTemplateFileName)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 
-	// Create the updated NGINX config file and save it into the file containing the current config
-	var buf bytes.Buffer
-	if err = tmpl.Execute(&buf, data); err != nil {
+	serverTmpl, err := template.ParseFiles(utils.NGINXTemplateDirName + utils.NGINXTemplateFileName)
+	if err != nil {
+		return "", "", err
+	}
+
+	var zoneBuf bytes.Buffer
+	if err = zoneTmpl.Execute(&zoneBuf, data); err != nil {
 		slog.Error("Error executing template: ", "error", err)
-		return err
-	}
-	nginxString := buf.String()
-
-	// write the file
-	err = os.WriteFile(nginxUserConfDir, []byte(nginxString), 0644)
-	if err != nil {
-		return err
+		return "", "", err
 	}
 
-	return nil
+	var serverBuf bytes.Buffer
+	if err = serverTmpl.Execute(&serverBuf, data); err != nil {
+		slog.Error("Error executing template: ", "error", err)
+		return "", "", err
+	}
+
+	return zoneBuf.String(), serverBuf.String(), nil
 }
 
 func buildTemplateData(username string, gw *GatewayConfig) TemplateData {
@@ -177,50 +204,44 @@ func LoadNewConfig(w http.ResponseWriter, r *http.Request) {
 
 	templateData := buildTemplateData(username, gatewayConf)
 
-	err = renderNginxTemplate(templateData, nginxUserConfPath)
+	zoneStr, serverStr, err := renderNginxTemplate(templateData)
 	if err != nil {
 		slog.Error("failed to render NGINX template", "error", err)
 		http.Error(w, "failed to render NGINX template", http.StatusInternalServerError)
 		return
 	}
 
-	// Atomic writes
-	renderedConfig, err := os.ReadFile(nginxUserConfPath)
-	if err != nil {
-		slog.Error("failed to read rendered NGINX template", "error", err)
-		http.Error(w, "failed to render NGINX template", http.StatusInternalServerError)
+	if err = atomicWrites(nginxUserConfDir, utils.NGINXZoneFileName, []byte(zoneStr)); err != nil {
+		slog.Error("failed to write NGINX zone", "error", err)
+		http.Error(w, "failed to write NGINX zone", http.StatusInternalServerError)
 		return
 	}
 
-	tempFile, err := os.CreateTemp(nginxUserConfDir, "nginx-*.conf")
-	if err != nil {
-		slog.Error("failed creating temp file", "error", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-	defer os.Remove(tempFile.Name())
-
-	if _, err = tempFile.Write(renderedConfig); err != nil {
-		slog.Error("failed writing temp config", "error", err)
-		tempFile.Close()
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	if err = tempFile.Close(); err != nil {
-		slog.Error("failed closing temp file", "error", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	// Atomic replace
-	if err = os.Rename(tempFile.Name(), nginxUserConfPath); err != nil {
-		slog.Error("failed replacing config file", "error", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+	if err = atomicWrites(nginxUserConfDir, utils.NGINXConfigFileName, []byte(serverStr)); err != nil {
+		slog.Error("failed to write NGINX config", "error", err)
+		http.Error(w, "failed to write NGINX zone", http.StatusInternalServerError)
 		return
 	}
 
 	slog.Info("gateway config updated successfully", "path", nginxUserConfPath)
-
 	w.WriteHeader(http.StatusOK)
+}
+
+func atomicWrites(dir, filename string, content []byte) error {
+	tmpFile, err := os.CreateTemp(dir, "nginx-*.conf")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err = tmpFile.Write(content); err != nil {
+		_ = tmpFile.Close()
+		return err
+	}
+
+	if err = tmpFile.Close(); err != nil {
+		return err
+	}
+
+	return os.Rename(tmpFile.Name(), filepath.Join(dir, filename))
 }
