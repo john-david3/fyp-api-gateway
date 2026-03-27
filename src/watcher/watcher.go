@@ -37,21 +37,27 @@ func Watch() {
 							slog.Error("error adding new user directory to watcher", "error", err)
 						}
 
-						confPath := filepath.Join(event.Name, "nginx.conf")
-						if _, err := os.Stat(confPath); err == nil {
-							sendNginxToDataplane(confPath)
+						zonePath := filepath.Join(event.Name, utils.NGINXZoneFileName)
+						serverPath := filepath.Join(event.Name, utils.NGINXConfigFileName)
+						_, zoneErr := os.Stat(zonePath)
+						_, serverErr := os.Stat(serverPath)
+						if zoneErr == nil && serverErr == nil {
+							sendNginxToDataplane(zonePath, serverPath)
+							continue
 						}
-						continue
 					}
 				}
 
-				if filepath.Base(event.Name) == "nginx.conf" {
-					if event.Has(fsnotify.Write) || event.Has(fsnotify.Create) || event.Has(fsnotify.Remove) {
+				base := filepath.Base(event.Name)
+				if base == utils.NGINXConfigFileName || base == utils.NGINXZoneFileName {
+					if event.Has(fsnotify.Rename) || event.Has(fsnotify.Create) || event.Has(fsnotify.Remove) {
 						slog.Info("watcher detected modified file:", "file", event.Name)
 
-						// send the config to the dataplane!
-						sendNginxToDataplane(event.Name)
+						userDir := filepath.Dir(event.Name)
+						zonePath := filepath.Join(userDir, utils.NGINXZoneFileName)
+						serverPath := filepath.Join(userDir, utils.NGINXConfigFileName)
 
+						sendNginxToDataplane(zonePath, serverPath)
 					}
 				}
 			case err, ok := <-watcher.Errors:
@@ -95,26 +101,29 @@ func addUserDirs(w *fsnotify.Watcher, root string) error {
 	return nil
 }
 
-func sendNginxToDataplane(filename string) {
-	body, err := os.ReadFile(filename)
-	if err != nil {
-		slog.Error("error opening file", "filename", filename, "error", err)
-		return
-	}
+func sendNginxToDataplane(zonePath, serverPath string) {
+	files := []string{zonePath, serverPath}
 
 	type SendData struct {
-		Filename string `json:"filename"`
-		Body     []byte `json:"body"`
+		Files map[string][]byte `json:"files"`
 	}
 
-	sendData := SendData{
-		Filename: filename,
-		Body:     body,
+	payload := SendData{
+		Files: make(map[string][]byte),
 	}
 
-	data, err := json.Marshal(sendData)
+	for _, file := range files {
+		body, err := os.ReadFile(file)
+		if err != nil {
+			slog.Error("error reading file", "file", file)
+			return
+		}
+		payload.Files[file] = body
+	}
+
+	data, err := json.Marshal(payload)
 	if err != nil {
-		slog.Error("error encoding file", "filename", filename, "error", err)
+		slog.Error("error encoding file", "error", err)
 		return
 	}
 
@@ -127,6 +136,8 @@ func sendNginxToDataplane(filename string) {
 		slog.Error("error creating request to send to control plane", "error", err)
 		return
 	}
+
+	req.Header.Set("Content-Type", "application/json")
 
 	client := http.Client{}
 	resp, err := client.Do(req)
