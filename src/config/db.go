@@ -13,6 +13,7 @@ import (
 
 	uuid "github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Database struct {
@@ -93,11 +94,11 @@ func (s *Server) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Store password hash
+	hashed_password, err := bcrypt.GenerateFromPassword([]byte(loginInfo.Password), 14)
 	_, err = s.DB.Conn.Exec(`
 		INSERT INTO users (username, password, config_yaml)
 		VALUES ($1, $2, $3);`,
-		loginInfo.Name, loginInfo.Password, utils.DefaultConfigContent,
+		loginInfo.Name, string(hashed_password), utils.DefaultConfigContent,
 	)
 	if err != nil {
 		slog.Error("error inserting user", "error", err)
@@ -154,11 +155,7 @@ func (s *Server) VerifyLoginInfo(w http.ResponseWriter, r *http.Request) {
 	//	[]byte(loginInfo.password),
 	//)
 
-	// TODO: create a proper hashed password
-	if storedHash != loginInfo.Password {
-		err = errors.New("invalid credentials")
-	}
-
+	err = bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(loginInfo.Password))
 	if err != nil {
 		slog.Error("error verifying loginInfo", "error", err)
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
