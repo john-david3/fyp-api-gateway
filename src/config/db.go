@@ -150,11 +150,6 @@ func (s *Server) VerifyLoginInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//err = bcrypt.CompareHashAndPassword(
-	//	[]byte(storedHash),
-	//	[]byte(loginInfo.password),
-	//)
-
 	err = bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(loginInfo.Password))
 	if err != nil {
 		slog.Error("error verifying loginInfo", "error", err)
