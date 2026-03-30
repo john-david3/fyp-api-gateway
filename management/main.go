@@ -21,6 +21,9 @@ func main() {
 	mux.HandleFunc("/config", auth.RequireSession(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/config.html")
 	}))
+	mux.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/docs.html")
+	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/index.html")
 	})

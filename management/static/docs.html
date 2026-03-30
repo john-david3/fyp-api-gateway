@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>API Gateway</title>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/auth">Signup/Login</a>
+            <a href="/config">Config File</a>
+            <a href="http://localhost:3000">Dashboard</a>
+            <a href="/docs">Docs</a>
+        </nav>
+    </header>
+
+    <main id="docs">
+        <h1>Docs</h1>
+        <p>The API Gateway for Micro-services is a system that allows developers of distributed systems to aggregate their micro-service
+            API endpoints under a single point of entry. It facilitates consistent application of security policies across groups of endpoints,
+            routes traffic to the correct API endpoints, and gives detailed feedback on the behaviour of changes to a developers gateway
+            configuration.
+
+            The gateway provides a suite of core features, including request routing, Basic Auth authentication, rate limiting, logging and
+            observability through a Grafana dashboard. A management UI was developed to allow developers to configure routes and policies
+            associated with their micro-services. A key difference between this API Gateway and existing solutions is how the gateway handles
+            errors using semantics analysis. Changes are analysed by the system and presented to the user as feedback on how the changes are
+            expected to affect the system, as well as what errors are likely to occur.
+        </p>
+
+        <h2>Gateway Config File</h2>
+        <code>
+            connections:
+                routes:
+                    - path:
+                      url:
+                      rate-limit:
+                        zone:
+                        rate:
+                      auth:
+        </code>
+        <p>Below is an explanation of each part of the gateway configuration file</p>
+        <ul>
+            <li><code>connections</code>: defines the root of the yaml file</li>
+            <li><code>routes</code>: defines a set of routes to a micro-service</li>
+            <li><code>path</code>: the name of the microservice as references by the API Gateway. Should not include a leading "/". If added, it will be removed and replaced with the owner's username.</li>
+            <li><code>url</code>: the public URL to the micro-service the API Gateway will route to e.g. api.example.com</li>
+            <li><code>rate-limit</code>: defines the values set by the user for rate limiting</li>
+            <li><ul>
+                <li><code>zone</code>: The amount of memory you wish to allocate to your rate limit queue. Default is 10MB. Upper and Lower bounds have been added.</li>
+                <li><code>rate</code>: The number of requests per sec allowed by the system to your micro-service. Default is 5r/s. Upper and Lower bounds have been added.</li>
+            </ul></li>
+            <li><code>auth</code>: a boolean value that determines whether the owner would like the micro-service to enforce Basic Auth.</li>
+        </ul>
+    </main>
+</body>
+</html>
