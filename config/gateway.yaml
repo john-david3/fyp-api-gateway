@@ -4,28 +4,28 @@
 
 connections:
   routes:
-    - path: /products
+    - path: products
       url: http://services:9001
       rate-limit:
         zone: 10
         rate: 5
       auth: false
 
-    - path: /orders
+    - path: orders
       url: http://services:9002
       rate-limit:
         zone: 10
         rate: 5
       auth: false
 
-    - path: /protected
+    - path: protected
       url: http://services:9003
       rate-limit:
         zone: 10
         rate: 5
       auth: true
 
-    - path: /external-weather
+    - path: external-weather
       url: https://api.open-meteo.com/v1/forecast?latitude=51.898&longitude=-8.4706&hourly=temperature_2m/
       rate-limit:
         zone: 10
