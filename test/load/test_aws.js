@@ -13,6 +13,4 @@ export default function (){
 		'status is 200': (r) => r.status === 200,
 		'response time < 100ms': (r) => r.timings.duration < 100,
 	});
-
-	sleep(1);
 }
