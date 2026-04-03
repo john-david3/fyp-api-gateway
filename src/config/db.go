@@ -2,18 +2,23 @@ package config
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/subtle"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"fyp-api-gateway/src/utils"
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	uuid "github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/crypto/argon2"
 )
 
 type Database struct {
@@ -65,6 +70,21 @@ func (d *Database) StartDB(path string) error {
 	return nil
 }
 
+func hashPassword(password string) (string, error) {
+	salt := make([]byte, 16)
+	if _, err := rand.Read(salt); err != nil {
+		return "", err
+	}
+
+	hash := argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, 32)
+
+	encoded := fmt.Sprintf("$argon2id$v=19$m=65536,t=1,p=4$%s$%s",
+		base64.RawStdEncoding.EncodeToString(salt),
+		base64.RawStdEncoding.EncodeToString(hash),
+	)
+	return encoded, nil
+}
+
 func (s *Server) Signup(w http.ResponseWriter, r *http.Request) {
 	slog.Info("attempting to sign up new user...")
 	loginInfo := &LoginInfo{}
@@ -94,7 +114,13 @@ func (s *Server) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashed_password, err := bcrypt.GenerateFromPassword([]byte(loginInfo.Password), 14)
+	hashed_password, err := hashPassword(loginInfo.Password)
+	if err != nil {
+		slog.Error("error hashing password", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
 	_, err = s.DB.Conn.Exec(`
 		INSERT INTO users (username, password, config_yaml)
 		VALUES ($1, $2, $3);`,
@@ -114,6 +140,41 @@ func (s *Server) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+/* Code for this method supplied by https://www.alexedwards.net/blog/how-to-hash-and-verify-passwords-with-argon2-in-go */
+func verifyPassword(password, hash string) (bool, error) {
+	var m, t, p uint32
+	var saltB64, hashB64 string
+	_, err := fmt.Sscanf(hash, "$argon2id$v=19$m=%d,t=%d,p=%d$%s",
+		&m, &t, &p, &saltB64)
+	if err != nil {
+		return false, err
+	}
+
+	parts := strings.Split(hash, "$")
+	if len(parts) != 6 {
+		return false, fmt.Errorf("invalid hash format")
+	}
+	saltB64 = parts[4]
+	hashB64 = parts[5]
+
+	salt, err := base64.RawStdEncoding.DecodeString(saltB64)
+	if err != nil {
+		return false, err
+	}
+	storedHash, err := base64.RawStdEncoding.DecodeString(hashB64)
+	if err != nil {
+		return false, err
+	}
+
+	keyLen := uint32(len(storedHash))
+	computed := argon2.IDKey([]byte(password), salt, t, m, uint8(p), keyLen)
+
+	if subtle.ConstantTimeCompare(computed, storedHash) != 1 {
+		return false, nil
+	}
+	return true, nil
 }
 
 /*
@@ -150,8 +211,8 @@ func (s *Server) VerifyLoginInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(loginInfo.Password))
-	if err != nil {
+	isCorrect, err := verifyPassword(loginInfo.Password, storedHash)
+	if err != nil || !isCorrect {
 		slog.Error("error verifying loginInfo", "error", err)
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 		return

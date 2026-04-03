@@ -4,20 +4,6 @@
 
 connections:
   routes:
-    - path: products
-      url: http://services:9001
-      rate-limit:
-        zone: 10
-        rate: 5
-      auth: false
-
-    - path: orders
-      url: http://services:9002
-      rate-limit:
-        zone: 10
-        rate: 5
-      auth: false
-
     - path: protected
       url: http://services:9003
       rate-limit:
