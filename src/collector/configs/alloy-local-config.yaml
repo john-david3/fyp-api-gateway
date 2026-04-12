@@ -1,50 +1,50 @@
-  local.file_match "nginx_logs" {
-    path_targets = [{
-    __path__ = "/var/log/nginx/users/**/*.log",
-    }]
-  }
-    
-    loki.source.file "nginx_logs" {
-    targets       = local.file_match.nginx_logs.targets
-    forward_to    = [loki.process.nginx_logs.receiver]
-    tail_from_end = true
-  }
-    
-    loki.process "nginx_logs" {
-    forward_to = [loki.write.default.receiver]
+local.file_match "nginx_logs" {
+  path_targets = [{
+  __path__ = "/var/log/nginx/users/**/*.log",
+  }]
+}
 
-    stage.regex {
-    expression = "/var/log/nginx/users/(?P<username>[^/]+)/"
-    source     = "__path__"
-    }
+  loki.source.file "nginx_logs" {
+  targets       = local.file_match.nginx_logs.targets
+  forward_to    = [loki.process.nginx_logs.receiver]
+  tail_from_end = true
+}
 
-    stage.labels {
-    values = {
-    username = "username",
-    }
-    }
+  loki.process "nginx_logs" {
+  forward_to = [loki.write.default.receiver]
 
-    stage.regex {
-    expression = "/var/log/nginx/users/[^/]+/(?P<stream>[^.]+)\\.log"
-    source     = "__path__"
-    }
+  stage.regex {
+  expression = "/var/log/nginx/users/(?P<username>[^/]+)/"
+  source     = "__path__"
+  }
 
-    stage.labels {
-    values = {
-    stream = "stream",
-    job    = "\"nginx\"",
-    }
-    }
+  stage.labels {
+  values = {
+  username = "username",
   }
-    
-    livedebugging {
-    enabled = true
   }
-    
-    loki.write "default" {
-    endpoint {
-    url       = "http://gateway:3100/loki/api/v1/push"
-    tenant_id = "tenant1"
-    }
-    external_labels = {}
+
+  stage.regex {
+  expression = "/var/log/nginx/users/[^/]+/(?P<stream>[^.]+)\\.log"
+  source     = "__path__"
   }
+
+  stage.labels {
+  values = {
+  stream = "stream",
+  job    = "\"nginx\"",
+  }
+  }
+}
+
+  livedebugging {
+  enabled = true
+}
+
+  loki.write "default" {
+  endpoint {
+  url       = "http://gateway:3100/loki/api/v1/push"
+  tenant_id = "tenant1"
+  }
+  external_labels = {}
+}
