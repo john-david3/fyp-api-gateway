@@ -228,6 +228,10 @@ func LoadNewConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func atomicWrites(dir, filename string, content []byte) error {
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
 	tmpFile, err := os.CreateTemp(dir, "nginx-*.conf")
 	if err != nil {
 		return err
