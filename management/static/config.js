@@ -33,14 +33,14 @@ uploadBtn.addEventListener("click", async () => {
         const findings = await pollFindings();
 
         if (!findings) {
-            showMessageModal("Error", "Could not retrieve findings from the backend.", "error");
+            displayResultTab("Error", "Could not retrieve findings from the backend.", "error");
             return;
         }
 
-        showFindingsModal(findings, content);
+        displayFindingsTab(findings, content);
 
     } catch (err) {
-        showMessageModal("Error", "Error saving: " + err.message, "error");
+        displayResultTab("Error", "Error saving: " + err.message, "error");
     }
 });
 
@@ -60,107 +60,87 @@ async function pollFindings(retries = 10, delayMs = 500) {
     return null;
 }
 
-function openModal(title) {
-    const backdrop = document.createElement("div");
-    backdrop.className = "modal-backdrop";
+function openFindingsWindow() {
+    const popup = document.createElement("div");
+    popup.className = "popup";
 
-    const dialog = document.createElement("div");
-    dialog.className = "modal";
-    dialog.setAttribute("role", "dialog");
-    dialog.setAttribute("aria-modal", "true");
-
-    const header = document.createElement("div");
-    header.className = "modal-header";
-
-    const titleEl = document.createElement("h2");
-    titleEl.className = "modal-title";
-    titleEl.textContent = title;
-
-    const closeBtn = document.createElement("button");
-    closeBtn.className = "modal-close";
-    closeBtn.innerHTML = "&times;";
-    closeBtn.setAttribute("aria-label", "Close");
-    closeBtn.addEventListener("click", () => closeModal(backdrop));
-
-    header.appendChild(titleEl);
-    header.appendChild(closeBtn);
+    const findingsWindow = document.createElement("div");
+    findingsWindow.className = "window";
 
     const body = document.createElement("div");
-    body.className = "modal-body";
+    body.className = "window-body";
 
     const footer = document.createElement("div");
-    footer.className = "modal-footer";
+    footer.className = "window-footer";
 
-    dialog.appendChild(header);
-    dialog.appendChild(body);
-    dialog.appendChild(footer);
-    backdrop.appendChild(dialog);
-    document.body.appendChild(backdrop);
+    findingsWindow.appendChild(body);
+    findingsWindow.appendChild(footer);
+    popup.appendChild(findingsWindow);
+    document.body.appendChild(popup);
 
-    backdrop.addEventListener("click", (e) => {
-        if (e.target === backdrop) closeModal(backdrop);
+    popup.addEventListener("click", (e) => {
+        if (e.target === popup) closeFindingsWindow(popup);
     });
 
     const escHandler = (e) => {
         if (e.key === "Escape") {
-            closeModal(backdrop);
+            closeFindingsWindow(popup);
             document.removeEventListener("keydown", escHandler);
         }
     };
     document.addEventListener("keydown", escHandler);
 
-    requestAnimationFrame(() => backdrop.classList.add("modal-backdrop--open"));
+    requestAnimationFrame(() => popup.classList.add("popup--open"));
 
-    return { backdrop, body, footer };
+    return { popup, body, footer };
 }
 
-function closeModal(backdrop) {
-    backdrop.classList.remove("modal-backdrop--open");
-    backdrop.addEventListener("transitionend", () => backdrop.remove(), { once: true });
+function closeFindingsWindow(popup) {
+    popup.classList.remove("popup--open");
+    popup.addEventListener("transitionend", () => popup.remove(), { once: true });
 }
 
-function showMessageModal(title, message, type = "info") {
-    const { backdrop, body, footer } = openModal(title);
+function displayResultTab(title, message, type = "info") {
+    const { popup, body, footer } = openFindingsWindow();
 
     const msg = document.createElement("p");
-    msg.className = `modal-message modal-message--${type}`;
+    msg.className = `message message--${type}`;
     msg.textContent = message;
     body.appendChild(msg);
 
     const okBtn = document.createElement("button");
     okBtn.textContent = "OK";
-    okBtn.addEventListener("click", () => closeModal(backdrop));
+    okBtn.addEventListener("click", () => closeFindingsWindow(popup));
     footer.appendChild(okBtn);
 }
 
-function showFindingsModal(findings, content) {
-    const { backdrop, body, footer } = openModal("Config Validation Results");
-
+function displayFindingsTab(findings, content) {
+    const { popup, body, footer } = openFindingsWindow();
     let hasErrors = false;
 
     for (const key in findings) {
         const items = findings[key] || [];
 
         const section = document.createElement("div");
-        section.className = "modal-section";
+        section.className = "section";
 
         const sectionTitle = document.createElement("h3");
-        sectionTitle.className = "modal-section-title";
+        sectionTitle.className = "section-title";
         sectionTitle.textContent = key;
         section.appendChild(sectionTitle);
 
         if (items.length === 0) {
             const none = document.createElement("p");
-            none.className = "modal-none";
+            none.className = "no-item";
             none.textContent = "None";
             section.appendChild(none);
         } else {
             const list = document.createElement("ul");
-            list.className = "modal-list";
+            list.className = "list-item";
             items.forEach(item => {
                 const li = document.createElement("li");
                 li.textContent = item;
-                if (key.toLowerCase() === "errors")   li.classList.add("error");
+                if (key.toLowerCase() === "errors") li.classList.add("error");
                 if (key.toLowerCase() === "warnings") li.classList.add("warning");
                 list.appendChild(li);
             });
@@ -174,8 +154,7 @@ function showFindingsModal(findings, content) {
 
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Close";
-    closeBtn.className = "btn-secondary";
-    closeBtn.addEventListener("click", () => closeModal(backdrop));
+    closeBtn.addEventListener("click", () => closeFindingsWindow(popup));
     footer.appendChild(closeBtn);
 
     if (!hasErrors) {
@@ -189,11 +168,11 @@ function showFindingsModal(findings, content) {
                     body: JSON.stringify({ content: content })
                 });
                 if (!response.ok) throw new Error("Accept failed");
-                closeModal(backdrop);
-                showMessageModal("Success", "Configuration applied successfully!", "success");
+                closeFindingsWindow(popup);
+                displayResultTab("Success", "Configuration applied successfully!", "success");
             } catch (err) {
-                closeModal(backdrop);
-                showMessageModal("Error", "Error applying config: " + err.message, "error");
+                closeFindingsWindow(popup);
+                displayResultTab("Error", "Error applying config: " + err.message, "error");
             }
         });
         footer.appendChild(acceptBtn);
