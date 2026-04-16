@@ -2,7 +2,7 @@
 A three plane API Gateway for Microservices. Written primarily in Go with NGINX functioning as the data plane. A management plane written in HTML, CSS and JS offers users a user interface to configure their microservice APIs.
 
 ## Requirements
-- `Golang`
+- `Golang v1.24.11`
 - `Docker-compose` for self hosting
 - `Make` for easy setup
 
